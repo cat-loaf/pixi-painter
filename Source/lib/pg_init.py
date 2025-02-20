@@ -12,6 +12,7 @@ def initialize_pygame(window_title, width, height):
     """
     
     pygame.init()
-    screen = pygame.display.set_mode((width, height))
+    screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
     pygame.display.set_caption(window_title)
+    
     return screen

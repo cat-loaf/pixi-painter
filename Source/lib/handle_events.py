@@ -15,8 +15,9 @@ def handle_events(data: PygameGlobals):
         QUIT: Close the Pygame window and exit the program.
         KEYDOWN: Check if the escape key is pressed and exit the program if it is.
     """
-    
-    for event in pygame.event.get():
+    events = pygame.event.get()
+    data.toolbar.handle_event(events)
+    for event in events:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
@@ -24,3 +25,10 @@ def handle_events(data: PygameGlobals):
             if event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 sys.exit()
+        elif event.type == pygame.VIDEORESIZE:
+            new_width = max(event.w, data.min_width)
+            new_height = max(event.h, data.min_height)
+            pygame.display.set_mode((new_width, new_height), pygame.RESIZABLE)
+            data.toolbar.resize_width(new_width)
+            data.screen_width = event.w
+            data.screen_height = event.h
