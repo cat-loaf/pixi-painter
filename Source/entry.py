@@ -11,7 +11,7 @@ manager.toolbar = toolbar.Toolbar(
     0, 0, 
     manager.screen_width, 
     50, 
-    pygame.Color("#1f1f1f"), 
+    manager.colors['toolbar'], 
     manager
 ).add_buttons([
     ExitButton    (lambda : ( manager.get_width() - 24 - 6)                    , 13),

@@ -23,7 +23,9 @@ class PygameGlobals:
             'black': (0, 0, 0),
             'red': (255, 0, 0),
             'green': (0, 255, 0),
-            'blue': (0, 0, 255)
+            'blue': (0, 0, 255),
+            'background': pygame.Color("#41444a"),
+            'toolbar': pygame.Color("#2e3034")
         }
         
         # Fonts
@@ -45,7 +47,7 @@ class PygameGlobals:
         pygame.quit()
         
     def draw(self):
-        self.screen.fill(self.colors['white'])
+        self.screen.fill(self.colors['background'])
         
         if self.toolbar:
             self.toolbar.draw(self.screen)
