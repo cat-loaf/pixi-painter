@@ -30,5 +30,5 @@ def handle_events(data: PygameGlobals):
             new_height = max(event.h, data.min_height)
             pygame.display.set_mode((new_width, new_height), pygame.RESIZABLE)
             data.toolbar.resize_width(new_width)
-            data.screen_width = event.w
-            data.screen_height = event.h
+            data.screen_width = new_width
+            data.screen_height = new_height
