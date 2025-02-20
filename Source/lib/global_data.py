@@ -28,6 +28,21 @@ class PygameGlobals:
             'toolbar': pygame.Color("#2e3034")
         }
         
+        self.palette_colors = [
+            pygame.Color("#ffffff"),
+            pygame.Color("#ff0000"),
+            pygame.Color("#00ff00"),
+            pygame.Color("#0000ff"),
+            pygame.Color("#ebedef"),
+            pygame.Color("#f78d05"),
+            pygame.Color("#f44242"),
+            pygame.Color("#f4428a"),
+            pygame.Color("#f442f4"),
+            pygame.Color("#f4a2f4"),
+            pygame.Color("#f4f2f4"),
+            pygame.Color("#f4f2f2")
+        ]
+        
         # Fonts
         self.fonts = {
             'default': pygame.font.Font(None, 36),
@@ -42,6 +57,8 @@ class PygameGlobals:
         self.paused = False
         
         self.toolbar = None
+        self.palette = None
+        self.selected_color = 0
                 
     def quit(self):
         pygame.quit()
@@ -51,6 +68,9 @@ class PygameGlobals:
         
         if self.toolbar:
             self.toolbar.draw(self.screen)
+        
+        if self.palette:
+            self.palette.draw(self.screen)
         
         pygame.display.flip()
     

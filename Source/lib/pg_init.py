@@ -1,4 +1,4 @@
-import pygame
+import pygame, sys, ctypes
 
 def initialize_pygame(window_title, width, height):
     """
@@ -12,7 +12,10 @@ def initialize_pygame(window_title, width, height):
     """
     
     pygame.init()
+    
     screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+    icon = pygame.image.load('./assets/logo-v1.png')
+    pygame.display.set_icon(icon)
     pygame.display.set_caption(window_title)
     
     return screen
