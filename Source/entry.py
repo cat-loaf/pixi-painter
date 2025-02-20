@@ -1,11 +1,11 @@
 import pygame
 
-from Source.lib import global_data
-from Source.lib import handle_events
-from Source.lib.ui import toolbar 
-from Source.lib.ui import palette
-from Source.lib.ui.buttons import *
-from Source.lib.io import palette_io
+from Source.pixi import global_data
+from Source.pixi import handle_events
+from Source.pixi.ui import toolbar 
+from Source.pixi.ui import palette
+from Source.pixi.ui.buttons import *
+from Source.pixi.io import palette_io
 
 manager = global_data.PygameGlobals()
 palette_file = palette_io.PaletteIO('palette.pal')

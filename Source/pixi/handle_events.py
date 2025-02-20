@@ -20,8 +20,7 @@ def handle_events(data: PygameGlobals):
     data.palette.handle_event(events)
     for event in events:
         if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+            data.running = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 ...
