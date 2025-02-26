@@ -1,5 +1,7 @@
 ![GitHub license](https://img.shields.io/github/license/cat-loaf/pixi-painter)
-<img src="./Source/assets/readme/mit.png" >
+
+<img src="./Source/assets/readme/mit.png" width="300">
+
 
 ![GitHub stars](https://img.shields.io/github/stars/cat-loaf/pixi-painter)
 ![GitHub forks](https://img.shields.io/github/forks/cat-loaf/pixi-painter)
