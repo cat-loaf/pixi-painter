@@ -1,6 +1,6 @@
-# Pixel Art Painter
-
+# Pixel Art Painter <img src="./Source/assets/logo-v2.png" width="40">
 Welcome to the Pixel Art Painter project! This application is a pixel art painting tool built using Python and Pygame. It is a rewrite of an older project, with improved features and performance.
+
 
 ## Planned Features
 
@@ -14,7 +14,7 @@ Welcome to the Pixel Art Painter project! This application is a pixel art painti
 ## Installation
 ### User-Friendly Installation
 
-You can download the latest release of Pixel Art Painter from the [Releases](https://github.com/cat-loaf/pxa-rewrite/releases) page. Alternatively, you can visit the [Pixel Art Painter website](https://cat-loaf.github.io/cat-loaf/pixi-painter) to download the application directly.
+You can download the latest release of Pixel Art Painter from the [Releases](https://github.com/cat-loaf/pixi-painter/releases) page. Alternatively, you can visit the [Pixel Art Painter website](https://cat-loaf.github.io/pixi-painter/) to download the application directly.
 
 Once downloaded, extract the files and navigate to the project directory. Then, run the application:
 
