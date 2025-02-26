@@ -14,7 +14,7 @@ Welcome to the Pixel Art Painter project! This application is a pixel art painti
 ## Installation
 ### User-Friendly Installation
 
-You can download the latest release of Pixel Art Painter from the [Releases](https://github.com/yourusername/pxa-rewrite/releases) page. Alternatively, you can visit the [Pixel Art Painter website](https://cat-loaf.github.io/cat-loaf/pixi-painter) to download the application directly.
+You can download the latest release of Pixel Art Painter from the [Releases](https://github.com/cat-loaf/pxa-rewrite/releases) page. Alternatively, you can visit the [Pixel Art Painter website](https://cat-loaf.github.io/cat-loaf/pixi-painter) to download the application directly.
 
 Once downloaded, extract the files and navigate to the project directory. Then, run the application:
 
@@ -32,7 +32,7 @@ pip install pygame
 Clone the repository and navigate to the project directory:
 
 ```bash
-git clone https://github.com/yourusername/pxa-rewrite.git
+git clone https://github.com/cat-loaf/pxa-rewrite.git
 cd pxa-rewrite
 ```
 
