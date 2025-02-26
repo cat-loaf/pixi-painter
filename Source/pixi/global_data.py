@@ -1,4 +1,4 @@
-import pygame
+import pygame, ctypes, sys
 from .pg_init import initialize_pygame
 from .draw import *
 
@@ -15,8 +15,8 @@ class PygameGlobals:
             self.screen_title, 
             self.screen_width, 
             self.screen_height
-        )
-        
+        )     
+
         # Colors
         self.colors = {
             'white': (255, 255, 255),

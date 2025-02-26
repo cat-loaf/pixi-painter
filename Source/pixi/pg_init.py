@@ -17,5 +17,8 @@ def initialize_pygame(window_title, width, height):
     icon = pygame.image.load('./assets/logo-v1.png')
     pygame.display.set_icon(icon)
     pygame.display.set_caption(window_title)
+    if sys.platform == 'win32':
+        user32 = ctypes.windll.user32
+        user32.SetProcessDPIAware()  # Avoid blurry scaling issues   
     
     return screen
