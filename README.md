@@ -20,7 +20,7 @@ Welcome to the Pixel Art Painter project! This application is a pixel art painti
 - Intuitive and user-friendly interface
 - Customizable canvas size
 - Various drawing tools (pencil, eraser, fill, etc.)
-- Color palette with support for custom colors
+- Color palette with support for custom colours
 - Save and load your artwork
 - Undo and redo functionality
 
@@ -67,6 +67,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Acknowledgements
 
 - Thanks to the Pygame community for their excellent library and support.
-- Special thanks to all contributors of the original project.
+- Special thanks to all the contributors
 
 Happy painting!
