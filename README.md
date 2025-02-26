@@ -1,6 +1,6 @@
 ![GitHub license](https://img.shields.io/github/license/cat-loaf/pixi-painter)
 
-<img src="./Source/assets/readme/mit.png" width="300">
+<img src="./Source/assets/readme/mit.png" width="400">
 
 
 ![GitHub stars](https://img.shields.io/github/stars/cat-loaf/pixi-painter)
