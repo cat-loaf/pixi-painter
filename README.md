@@ -25,7 +25,8 @@ Welcome to the Pixel Art Painter project! This application is a pixel art painti
 - Undo and redo functionality
 
 ## Installation
-### User-Friendly Installation
+TBA
+<!-- ### User-Friendly Installation
 
 You can download the latest release of Pixel Art Painter from the [Releases](https://github.com/cat-loaf/pixi-painter/releases) page. 
 Alternatively, you can visit the [Pixel Art Painter website](https://cat-loaf.github.io/pixi-painter/) to download the application directly.
@@ -40,7 +41,7 @@ To run the Pixel Art Painter, you need to have Python and Pygame installed on yo
 ```bash
 pip install pygame
 ```
-<!-- 
+
 ## Usage
 
 Clone the repository and navigate to the project directory:
