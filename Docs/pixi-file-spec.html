@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pixi File Format v1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            font-family: 'Funnel Display', sans-serif;
+            color: black;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3b3b3b;
+            color:white;
+        }
+        code {
+            font-family: 'Space Mono', monospace;
+            background-color: #aaa;
+            border-radius:.3em;
+            padding: .1em .3em;
+        }
+        h1 code {
+            background-color: #3b3b3b;
+            color: #dddddf;
+        }
+    </style>
+</head>
+<body class="p-4 bg-[#3b3b3b] flex flex-col gap-4">
+    <div class="bg-[#dddddf] p-4">
+        <h1 class="text-2xl font-semibold"><code class="px-2 py-1">pixi</code> File Format v1</h1>
+        <p class="text-xl">From <a href="https://cat-loaf.github.io/cat-loaf/" target="_blank" class="font-semibold underline text-slate-500">kcatloaf</a> for <a class="font-semibold underline text-slate-500" href="https://github.com/cat-loaf/pixi-painter" target="_blank"><kbd class="text-slate-500">pixi-painter</kbd></a></p>
+    </div>
+
+    <div>
+        <hr class="border-[#dddddf]">
+    </div>
+
+    <div class="bg-[#dddddf] p-4">
+        <h2 class="text-xl font-bold mt-4 mb-2" id="flags">Flags Enumeration</h2>
+        <table>
+            <tr>
+                <th>Flag Value</th>
+                <th>Description</th>
+            </tr>
+            <tr><td class="w-[7em]">(0x00)</td><td>No Flags (Assume Defaults)</td></tr>
+            <tr><td class="w-[7em]">(0x?1)</td><td>RGB</td></tr>
+            <tr><td class="w-[7em]">(0x?2)</td><td>RGBA</td></tr>
+            <tr><td class="w-[7em]">(0x?3)</td><td>CMYK</td></tr>
+            <tr><td class="w-[7em]">(0x?4)</td><td>CMYKA</td></tr>
+            <tr><td class="w-[7em]">(0x?5)</td><td>Indexed Colours</td></tr>
+            <tr><td class="w-[7em]">(0x1?)</td><td>Is Compressed</td></tr>
+        </table>
+    </div>
+
+    
+    <div>
+        <hr class="border-[#dddddf]">
+    </div>
+    
+    <div class="bg-[#dddddf] p-4">
+        <h2 class="text-xl font-bold mt-4 mb-2">Header Data</h2>
+        <table>
+            <tr>
+                <th>Location</th>
+                <th>Size</th>
+                <th>Description</th>
+            </tr>
+            <tr><td class="w-[7em]">0x00</td><td class="w-[6em]">4 bytes</td><td>Magic number (<code>0x706978690A</code> - <code>pixi</code> in ASCII)</td></tr>
+            <tr><td class="w-[7em]">0x04</td><td class="w-[6em]">2 bytes</td><td>Major version (<code>0x00</code>)</td></tr>
+            <tr><td class="w-[7em]">0x06</td><td class="w-[6em]">2 bytes</td><td>Minor version (<code>0x01</code>)</td></tr>
+            <tr><td class="w-[7em]">0x08</td><td class="w-[6em]">4 bytes</td><td>Width of Image</td></tr>
+            <tr><td class="w-[7em]">0x0C</td><td class="w-[6em]">4 bytes</td><td>Height of image</td></tr>
+            <tr><td class="w-[7em]">0x10</td><td class="w-[6em]">1 byte</td><td>Flags (ref. to <a href="#flags" class="text-blue-700 underline underline-offset-[0.3em] transition-colors hover:text-blue-700">Flag Enumeration</a>)</td></tr>
+            <tr><td class="w-[7em]">0x11</td><td class="w-[6em]">1 byte</td><td>Triplet size (<code>3 = RGB</code>, <code>4 = RGBA</code>, <code>4 = CYMK</code>, <code>5 = CMYKA</code>)</td></tr>
+            <tr><td class="w-[7em]">0x12</td><td class="w-[6em]">2 bytes</td><td>Reserved</td></tr>
+        </table>
+    </div>
+    
+    <div class="bg-[#dddddf] p-4">
+        <h2 class="text-xl font-bold mt-4 mb-2">File Metadata</h2>
+        <table>
+            <tr>
+                <th>Location</th>
+                <th>Size</th>
+                <th>Description</th>
+            </tr>
+            <tr><td class="w-[7em]">0x14</td><td class="w-[6em]">4 bytes</td><td>Length of creator name (i)</td></tr>
+            <tr><td class="w-[7em]">0x1B</td><td class="w-[6em]">i bytes</td><td>Creator name</td></tr>
+            <tr><td class="w-[7em]">0x1B+i</td><td class="w-[6em]">4 bytes</td><td>Length of description (j)</td></tr>
+            <tr><td class="w-[7em]">0x1F+i</td><td class="w-[6em]">j bytes</td><td>Description</td></tr>
+            <tr><td class="w-[7em]">0x1F+i+j</td><td class="w-[6em]">4 bytes</td><td>Length of <code>,</code> separated tags/keywords (k)</td></tr>
+            <tr><td class="w-[7em]">0x23+i+j</td><td class="w-[6em]">k bytes</td><td>Tags/Keywords</td></tr>
+            <tr><td class="w-[7em]">0x23+i+j+k</td><td class="w-[6em]">128 bytes</td><td>Checksum</td></tr>
+        </table>
+    </div>
+    
+    <div class="bg-[#dddddf] p-4">
+        <h2 class="text-xl font-bold mt-4 mb-2">Image Data</h2>
+        <table>
+            <tr>
+                <th>Location</th>
+                <th>Size</th>
+                <th>Description</th>
+            </tr>
+            <tr><td class="w-[7em]">0xA3+i+j+k</td><td class="w-[6em]">4 bytes</td><td>Amount of Indexed Colours (l)</td></tr>
+            <tr><td class="w-[7em]">0xA7+i+j+k</td><td class="w-[6em]">l bytes</td><td>Colour Palette (Indexed Colours Definition)</td></tr>
+            <tr><td class="w-[7em]">0xAB+i+j+k+l</td><td class="w-[6em]">m bytes</td><td>Image Data <br> <code>amount to read = width * height * triplet size</code></td></tr>
+        </table>
+    </div>
+</body>
+</html>
