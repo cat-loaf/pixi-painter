@@ -40,21 +40,21 @@ To run the Pixel Art Painter, you need to have Python and Pygame installed on yo
 ```bash
 pip install pygame
 ```
-
+<!-- 
 ## Usage
 
 Clone the repository and navigate to the project directory:
 
 ```bash
 git clone https://github.com/cat-loaf/pixi-painter.git
-cd pixi-painter
+cd pixi-painter/
 ```
 
 Run the application:
 
 ```bash
 python main.py
-```
+``` -->
 
 ## Contributing
 
