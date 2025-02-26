@@ -1,3 +1,9 @@
+![GitHub stars](https://img.shields.io/github/stars/cat-loaf/pixi-painter)
+![GitHub forks](https://img.shields.io/github/forks/cat-loaf/pixi-painter)
+![GitHub issues](https://img.shields.io/github/issues/cat-loaf/pixi-painter)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/cat-loaf/pixi-painter)
+![GitHub license](https://img.shields.io/github/license/cat-loaf/pixi-painter)
+
 # Pixel Art Painter <img src="./Source/assets/logo-v2.png" width="40">
 Welcome to the Pixel Art Painter project! This application is a pixel art painting tool built using Python and Pygame. It is a rewrite of an older project, with improved features and performance.
 
@@ -33,8 +39,8 @@ pip install pygame
 Clone the repository and navigate to the project directory:
 
 ```bash
-git clone https://github.com/cat-loaf/pxa-rewrite.git
-cd pxa-rewrite
+git clone https://github.com/cat-loaf/pixi-painter.git
+cd pixi-painter
 ```
 
 Run the application:
