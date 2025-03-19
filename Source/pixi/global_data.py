@@ -1,7 +1,9 @@
 import pygame, ctypes, sys
 from .pg_init import initialize_pygame
 from .draw import *
-
+from .action import Action
+from .ui.toolbar import Toolbar
+from .ui.palette import Palette
 class PygameGlobals:
     def __init__(self):
         # Initialize Pygame
@@ -56,10 +58,13 @@ class PygameGlobals:
         self.running = True
         self.paused = False
         
-        self.toolbar = None
+        self.toolbar:Toolbar = None
         self.palette = None
         self.selected_color = 0
-                
+        
+        self.undo_buffer : list[Action] = []
+        self.redo_buffer : list[Action] = []
+        
     def quit(self):
         pygame.quit()
         
@@ -78,3 +83,20 @@ class PygameGlobals:
         return self.screen_width
     def get_height(self):
         return self.screen_height
+    
+    def add_action(self,action):
+        self.undo_buffer.append(action)
+        self.redo_buffer = []
+    
+    def undo(self):
+        if len(self.undo_buffer) > 0:
+            action = self.undo_buffer.pop()
+            action.undo()
+            self.redo_buffer.append(action)
+    
+    def redo(self):
+        if len(self.redo_buffer) > 0:
+            action = self.redo_buffer.pop()
+            action.redo()
+            self.undo_buffer.append(action)
+        
