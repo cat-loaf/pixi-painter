@@ -1,5 +1,5 @@
 from typing import Any
-from .Helpers import RGBA
+from .Types import RGBA
 
 
 class Cell:

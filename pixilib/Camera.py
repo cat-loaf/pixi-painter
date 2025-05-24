@@ -1,7 +1,9 @@
 import pygame
 from .Grid import Grid, ComputedLayeredGrid
 from pygame import Surface
-from .Helpers import rgb_to_packedint, rgba_to_rgb, RGB
+from .Helpers import rgb_to_packedint, rgba_to_rgb
+from .Types import RGB
+from .Tools import Tool, PaintTool
 
 
 class GridCamera:
@@ -113,19 +115,6 @@ class GridCamera:
             Surface: _description_
         """
         return pygame.transform.scale(surface, (width, height))
-
-    def click(self, mouse_x, mouse_y, surface: Surface, layer: int = 0):
-        """Handle mouse click events on the grid"""
-
-        grid_increment = self.width / self.grid.width
-
-        grid_x = int((mouse_x - self.real_x) / grid_increment)
-        grid_y = int((mouse_y - self.real_y) / grid_increment)
-
-        # check if the coordinates are within the grid bounds
-        if 0 <= grid_x < self.grid.width and 0 <= grid_y < self.grid.height:
-            # get the cell at the clicked position
-            self.grid[grid_x, grid_y] = (255, 0, 255, 255)
 
     def _draw_gridlines(self, surface: Surface, color: RGB):
         """Internal Method, Draw grid lines on the surface

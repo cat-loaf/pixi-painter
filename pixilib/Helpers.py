@@ -1,7 +1,5 @@
 import numpy as np
-
-type RGBA = tuple[int, int, int, int]
-type RGB = tuple[int, int, int]
+from .Types import RGB, RGBA
 
 
 def clamp(value: float, min_value: float, max_value: float) -> float:
@@ -60,3 +58,17 @@ def rgb_to_packedint(rgb: RGB) -> int:
         int: Packed integer representation of the RGB color
     """
     return (rgb[0] << 16) | (rgb[1] << 8) | rgb[2]
+
+
+def color_diff(c1: RGBA, c2: RGBA) -> float:
+    """Euclidean distance between two RGBA colors
+    Args:
+        c1 (RGBA): First color
+        c2 (RGBA): Second color
+    """
+    return np.sqrt(
+        (c1[0] - c2[0]) ** 2
+        + (c1[1] - c2[1]) ** 2
+        + (c1[2] - c2[2]) ** 2
+        + (c1[3] - c2[3]) ** 2
+    )

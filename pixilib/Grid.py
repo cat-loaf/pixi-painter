@@ -1,6 +1,7 @@
 from typing import Any
 from .Cell import Cell
-from .Helpers import RGBA, stack_rgba
+from .Helpers import stack_rgba
+from .Types import RGBA
 
 
 class Grid:
