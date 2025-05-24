@@ -4,6 +4,8 @@ from .Helpers import RGBA, stack_rgba
 
 
 class Grid:
+    """Grid class for managing a grid of cells with RGBA values"""
+
     def __init__(self, width: int, height: int, default_value: RGBA = (0, 0, 0, 0)):
         self.width = width
         self.height = height
@@ -27,6 +29,8 @@ class Grid:
 
 
 class ComputedLayeredGrid:
+    """Layered grid class that computes RGB from stacked RGBA layers of grids"""
+
     def __init__(self, width: int, height: int):
         # All layers must match width and height
         self.width = width
@@ -39,6 +43,15 @@ class ComputedLayeredGrid:
         self._computed_grid: Grid = Grid(width, height)
 
     def add_layer(self, grid: Grid, insert: int = -1):
+        """Add a grid to the layers at index `insert`
+
+        Args:
+            grid (Grid): The grid to add
+            insert (int, optional): _description_. Defaults to -1
+
+        Raises:
+            ValueError: Grid (to add) dimensions should match `self.width` and `self.height`
+        """
         if grid.width != self.width or grid.height != self.height:
             raise ValueError("Grid dimensions do not match")
 
@@ -50,6 +63,7 @@ class ComputedLayeredGrid:
         self._update_computed_grid()
 
     def _update_computed_grid(self):
+        """Internal method, Updates computed grid only if calculated values differ from stored values"""
         for y in range(self.height):
             for x in range(self.width):
                 # Update only if computed grid is different from actual computed grid
@@ -57,6 +71,15 @@ class ComputedLayeredGrid:
                     self._computed_grid[x, y].value = self._compute_cell(x, y)
 
     def _compute_cell(self, x: int, y: int) -> RGBA:
+        """Internal method, Stack all RGBA values from all layers at `(x,y)` and return computed RGBA value
+
+        Args:
+            x (int): X coordinate of cells to calculate
+            y (int): Y coordinate of cells to calculate
+
+        Returns:
+            RGBA: stacked RGBA value of all layers at `(x,y)`
+        """
         cells: list[RGBA] = []
         i: int = len(self.layers) - 1  # Reverse order (start from highest layer)
         while i >= 0:
@@ -69,7 +92,7 @@ class ComputedLayeredGrid:
         if len(cells) == 0:
             return (0, 0, 0, 0)
 
-        # Calculate average color
+        # Calculate stacked color
         i = 0
         while len(cells) > 1:
             c1 = cells[i]
@@ -82,10 +105,11 @@ class ComputedLayeredGrid:
         return cells[0]
 
     def get_computed_grid(self) -> Grid:
+        """Returns computed grid"""
         return self._computed_grid
 
     def get_computed_grid_cells(self) -> list[list[Cell]]:
-        print(self._computed_grid.cells)
+        """Returns the cells in list[list[Cell]] format"""
         return self._computed_grid.cells
 
     def __getitem__(self, index: tuple[int, int, int]):
