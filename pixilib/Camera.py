@@ -67,6 +67,10 @@ class GridCamera:
             surface, int(self.width * self.scale), int(self.height * self.scale)
         )
 
+        self._draw_gridlines(
+            surface_scaled, (0, 0, 0)
+        )  # Draw grid lines on the surface
+
         screen.blit(
             surface_scaled,
             (
@@ -76,7 +80,7 @@ class GridCamera:
         )
 
     def _generate_surface(self, surface: Surface, background: RGB):
-        """Generate surface from grid data
+        """Internal Method, Generate surface from grid data
         Writes pixel data directly to the surface's pixel array for performance
 
         Args:
@@ -98,7 +102,7 @@ class GridCamera:
     def _scale_surface_to_camera_dimensions(
         self, surface: Surface, width: int, height: int
     ) -> Surface:
-        """Scale the surface to fit the camera dimensions
+        """Internal Method, Scale the surface to fit the camera dimensions
 
         Args:
             surface (Surface): The Pygame surface to scale
@@ -118,8 +122,22 @@ class GridCamera:
         grid_x = int((mouse_x - self.real_x) / grid_increment)
         grid_y = int((mouse_y - self.real_y) / grid_increment)
 
-        print(grid_x, grid_y)
         # check if the coordinates are within the grid bounds
         if 0 <= grid_x < self.grid.width and 0 <= grid_y < self.grid.height:
             # get the cell at the clicked position
             self.grid[grid_x, grid_y] = (255, 0, 255, 255)
+
+    def _draw_gridlines(self, surface: Surface, color: RGB):
+        """Internal Method, Draw grid lines on the surface
+
+        Args:
+            surface (Surface): The Pygame surface to draw the grid lines on
+            color (RGB): The color of the grid lines
+        """
+
+        grid_increment = self.width / self.grid.width
+
+        for x in range(0, self.width, int(grid_increment)):
+            pygame.draw.line(surface, color, (x, 0), (x, self.height))
+        for y in range(0, self.height, int(grid_increment)):
+            pygame.draw.line(surface, color, (0, y), (self.width, y))

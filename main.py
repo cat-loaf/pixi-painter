@@ -25,15 +25,21 @@ def main():
 
     while running:
         dt = clock.tick(60)
-        
+
+        keys_held = pygame.key.get_pressed()
+        mouse_held = pygame.mouse.get_pressed()
+        mouse_pos = pygame.mouse.get_pos()
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
 
-        keys_pressed = pygame.key.get_pressed()
-        mouse_left, mouse_middle, mouse_right = pygame.mouse.get_pressed()
-        mouse_pos = pygame.mouse.get_pos()
-        if mouse_left:
+        if keys_held[pygame.K_r]:
+            # Reset
+
+            grid.clear()
+
+        if mouse_held[0]:
             camera.click(mouse_pos[0], mouse_pos[1], cam_surface, 0)
         # Clear the screen
         screen.fill((31, 31, 31))
