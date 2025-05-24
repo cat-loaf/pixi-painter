@@ -35,7 +35,7 @@ class PaintTool(Tool):
         color: RGBA,
         layer: int = 0,
         radius: int = 0,
-        radiusType: BrushTypes = BrushTypes.CIRCLE,
+        radius_type: BrushTypes = BrushTypes.CIRCLE,
         *args,
         **kwargs,
     ):
@@ -61,16 +61,44 @@ class PaintTool(Tool):
             grid[x, y] = color
             return
 
-        match radiusType:
-            case BrushTypes.CIRCLE:
+        match radius_type:
+            case BrushTypes.SQUARE:
+                if radius == 1:
+                    if 0 <= x < grid.width and 0 <= y < grid.height:
+                        grid[x, y, layer] = color
+                    if 0 <= x + 1 < grid.width and 0 <= y < grid.height:
+                        grid[x + 1, y, layer] = color
+                    if 0 <= x < grid.width and 0 <= y + 1 < grid.height:
+                        grid[x, y + 1, layer] = color
+                    if 0 <= x + 1 < grid.width and 0 <= y + 1 < grid.height:
+                        grid[x + 1, y + 1, layer] = color
+                    return
+
+                radius -= 1
+
+                for i in range(-radius, radius + 1):
+                    for j in range(-radius, radius + 1):
+                        if (
+                            x + i < 0
+                            or x + i >= grid.width
+                            or y + j < 0
+                            or y + j >= grid.height
+                        ):
+                            continue
+                        grid[x + i, y + j, layer] = color
+
+            case BrushTypes.CIRCLE | _:
                 for i in range(-radius, radius + 1):
                     for j in range(-radius, radius + 1):
                         if i * i + j * j <= radius * radius:
+                            if (
+                                x + i < 0
+                                or x + i >= grid.width
+                                or y + j < 0
+                                or y + j >= grid.height
+                            ):
+                                continue
                             grid[x + i, y + j, layer] = color
-            case BrushTypes.SQUARE:
-                for i in range(-radius, radius + 1):
-                    for j in range(-radius, radius + 1):
-                        grid[x + i, y + j, layer] = color
 
 
 class EraserTool(Tool):
@@ -104,24 +132,7 @@ class EraserTool(Tool):
         """
 
         color = (0, 0, 0, 0)  # Transparent color for erasing
-
-        if x < 0 or x >= grid.width or y < 0 or y >= grid.height:
-            raise ValueError("Coordinates are out of bounds of the grid.")
-
-        if radius == 0:
-            grid[x, y] = color
-            return
-
-        match radiusType:
-            case BrushTypes.CIRCLE:
-                for i in range(-radius, radius + 1):
-                    for j in range(-radius, radius + 1):
-                        if i * i + j * j <= radius * radius:
-                            grid[x + i, y + j, layer] = color
-            case BrushTypes.SQUARE:
-                for i in range(-radius, radius + 1):
-                    for j in range(-radius, radius + 1):
-                        grid[x + i, y + j, layer] = color
+        return PaintTool.run(grid, x, y, color, layer, radius, radiusType)
 
 
 class FillTool(Tool):

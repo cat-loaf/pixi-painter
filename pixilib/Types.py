@@ -9,6 +9,6 @@ class BrushTypes(Enum):
     Enum for different brush types.
     """
 
-    DEFAULT = "circle"
+    DEFAULT = "default"
     SQUARE = "square"
     CIRCLE = "circle"

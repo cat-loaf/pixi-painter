@@ -1,3 +1,4 @@
+from typing import Dict
 import pygame
 from pygame.locals import *
 from pygame.font import Font
@@ -5,6 +6,7 @@ import pixilib.Camera as Camera
 from pixilib.Grid import ComputedLayeredGrid, Grid
 from pixilib.DebugView import drawDebugView
 from pixilib.Tools import *
+from pixilib.Helpers import clamp, overflow
 
 
 def main():
@@ -38,10 +40,21 @@ def main():
     ]
     selected_color: int = 0
 
-    debug_texts = {
+    tool_size: int = 0
+
+    tool_brush_types: list[BrushTypes] = [
+        BrushTypes.DEFAULT,
+        BrushTypes.CIRCLE,
+        BrushTypes.SQUARE,
+    ]
+    selected_brush: int = 0
+
+    debug_texts: Dict[str:any] = {
         "dt": 0,
         "Tool": lambda: toolset[selected_tool],
         "Color": lambda: tool_color[selected_color],
+        "Tool Size": lambda: tool_size,
+        "Brush Type": lambda: tool_brush_types[selected_brush].name,
     }
     while running:
         dt = clock.tick(60)
@@ -60,19 +73,33 @@ def main():
                 running = False
 
             if event.type == KEYDOWN:
+                debug_texts["Key Pressed"] = (
+                    chr(event.key) if event.key < 0x10FFFF else event.key
+                )
+
                 if event.key == K_RIGHT:
-                    # Switch to next tool
-                    selected_tool = (selected_tool + 1) % len(toolset)
+                    selected_tool = overflow(selected_tool + 1, 0, len(toolset))
                 if event.key == K_LEFT:
-                    # Switch to previous tool
-                    selected_tool = (selected_tool - 1) % len(toolset)
+                    selected_tool = overflow(selected_tool - 1, 0, len(toolset))
 
                 if event.key == K_UP:
-                    # Switch to next color
-                    selected_color = (selected_color + 1) % len(tool_color)
+                    selected_color = overflow(selected_color + 1, 0, len(tool_color))
                 if event.key == K_DOWN:
-                    # Switch to previous color
-                    selected_color = (selected_color - 1) % len(tool_color)
+                    selected_color = overflow(selected_color - 1, 0, len(tool_color))
+
+                if event.key == K_KP_PLUS:
+                    tool_size = overflow(tool_size + 1, 0, 11)
+                if event.key == K_KP_MINUS:
+                    tool_size = overflow(tool_size - 1, 0, 11)
+
+                if event.key == K_KP_MULTIPLY:
+                    selected_brush = overflow(
+                        selected_brush + 1, 0, len(tool_brush_types)
+                    )
+                if event.key == K_KP_DIVIDE:
+                    selected_brush = overflow(
+                        selected_brush - 1, 0, len(tool_brush_types)
+                    )
 
             if event.type == MOUSEBUTTONDOWN:
                 debug_texts["Mouse Pressed"] = event.button
@@ -83,7 +110,7 @@ def main():
                             y=grid_y,
                             grid=grid,
                             color=tool_color[selected_color],
-                            radius=0,
+                            radius=tool_size,
                         )
             else:
                 debug_texts["Mouse Pressed"] = None
@@ -96,7 +123,8 @@ def main():
                         y=grid_y,
                         grid=grid,
                         color=tool_color[selected_color],
-                        radius=0,
+                        radius=tool_size,
+                        radius_type=tool_brush_types[selected_brush],
                     )
             # camera.click(mouse_pos[0], mouse_pos[1], cam_surface, 0)
         # Clear the screen

@@ -4,10 +4,8 @@ from .Types import RGB
 
 
 def drawDebugView(font: Font, screen: Surface, color: RGB, texts: dict):
+    texts = {k: v for k, v in texts.items() if v is not None}
     for label, value in texts.items():
-        if value is None:
-            continue
-
         if callable(value):
             value = value()
 

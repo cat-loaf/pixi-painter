@@ -1,19 +1,34 @@
+from numbers import Number
 import numpy as np
 from .Types import RGB, RGBA
 
 
-def clamp(value: float, min_value: float, max_value: float) -> float:
+def clamp(value: Number, min_value: Number, max_value: Number) -> Number:
     """Clamp a value between a minimum and maximum value
 
     Args:
-        value (float): The value to clamp
-        min_value (float): The minimum value
-        max_value (float): The maximum value
+        value (Number): The value to clamp
+        min_value (Number): The minimum value
+        max_value (Number): The maximum value
 
     Returns:
-        float: The clamped value, which will be between min_value and max_value
+        Number: The clamped value, which will be between min_value and max_value
     """
     return max(min(value, max_value), min_value)
+
+
+def overflow(value: Number, min_value: Number, max_value: Number) -> Number:
+    """Overflow a value between a minimum and maximum value
+
+    Args:
+        value (Number): The value to overflow
+        min_value (Number): The minimum value
+        max_value (Number): The maximum value
+
+    Returns:
+        Number: The overflowed value, which will be between min_value and max_value
+    """
+    return (value - min_value) % (max_value - min_value) + min_value
 
 
 def stack_rgba(c1: RGBA, c2: RGBA) -> RGBA:
