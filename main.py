@@ -53,7 +53,7 @@ def main():
     ]
     selected_color: int = 0
 
-    tool_size: int = 0
+    tool_sizes: list[int] = [0 for _ in range(len(toolset))]
 
     tool_brush_types: list[BrushTypes] = [
         BrushTypes.DEFAULT,
@@ -65,7 +65,7 @@ def main():
     debug_text: Dict[str:any] = {
         "Tool": lambda: toolset[selected_tool],
         "Color": lambda: tool_color[selected_color],
-        "Tool Size": lambda: tool_size,
+        "Tool Size": lambda: tool_sizes[selected_tool],
         "Brush Type": lambda: tool_brush_types[selected_brush].name,
         "Camera Scale": lambda: camera.scale,
     }
@@ -95,7 +95,9 @@ def main():
 
         debug_text["Grid Pos"] = (grid_x, grid_y)
 
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        # debug_text["events"] = events
+        for event in events:
             if event.type == QUIT:
                 running = False
 
@@ -105,27 +107,35 @@ def main():
                 )
 
                 if event.key == K_RIGHT:
-                    selected_tool = overflow(selected_tool + 1, 0, len(toolset))
+                    selected_tool = overflow(selected_tool + 1, 0, len(toolset) - 1)
                 if event.key == K_LEFT:
-                    selected_tool = overflow(selected_tool - 1, 0, len(toolset))
+                    selected_tool = overflow(selected_tool - 1, 0, len(toolset) - 1)
 
                 if event.key == K_UP:
-                    selected_color = overflow(selected_color + 1, 0, len(tool_color))
+                    selected_color = overflow(
+                        selected_color + 1, 0, len(tool_color) - 1
+                    )
                 if event.key == K_DOWN:
-                    selected_color = overflow(selected_color - 1, 0, len(tool_color))
+                    selected_color = overflow(
+                        selected_color - 1, 0, len(tool_color) - 1
+                    )
 
                 if event.key == K_KP_PLUS:
-                    tool_size = overflow(tool_size + 1, 0, 11)
+                    tool_sizes[selected_tool] = clamp(
+                        tool_sizes[selected_tool] + 1, 0, 10
+                    )
                 if event.key == K_KP_MINUS:
-                    tool_size = overflow(tool_size - 1, 0, 11)
+                    tool_sizes[selected_tool] = clamp(
+                        tool_sizes[selected_tool] - 1, 0, 10
+                    )
 
                 if event.key == K_KP_MULTIPLY:
                     selected_brush = overflow(
-                        selected_brush + 1, 0, len(tool_brush_types)
+                        selected_brush + 1, 0, len(tool_brush_types) - 1
                     )
                 if event.key == K_KP_DIVIDE:
                     selected_brush = overflow(
-                        selected_brush - 1, 0, len(tool_brush_types)
+                        selected_brush - 1, 0, len(tool_brush_types) - 1
                     )
 
             if event.type == MOUSEBUTTONDOWN:
@@ -137,50 +147,52 @@ def main():
                 debug_text["Pan Origin"] = pan_origin
                 debug_text["Click Origin"] = click_origin
 
-                if toolset[selected_tool] in mouse_pressed_tools:
-                    if in_grid(grid_x, grid_y, grid.width, grid.height):
-                        toolset[selected_tool].run(
-                            x=grid_x,
-                            y=grid_y,
-                            grid=grid,
-                            color=tool_color[selected_color],
-                            radius=tool_size,
-                            radius_type=tool_brush_types[selected_brush],
-                            data=data,
-                            mouse_held=mouse_held[0],
-                        )
+                if event.button == 1:
+                    if toolset[selected_tool] in mouse_pressed_tools:
+                        if in_grid(grid_x, grid_y, grid.width, grid.height):
+                            toolset[selected_tool].run(
+                                x=grid_x,
+                                y=grid_y,
+                                grid=grid,
+                                color=tool_color[selected_color],
+                                radius=tool_sizes[selected_tool],
+                                radius_type=tool_brush_types[selected_brush],
+                                data=data,
+                                mouse_held=mouse_held[0],
+                            )
 
             if event.type == MOUSEBUTTONUP:
                 debug_text["Mouse Pressed"] = None
                 data["mouse_held"] = False
-                if toolset[selected_tool] in mouse_up_tools:
-                    if toolset[selected_tool] == LineTool:
-                        LineTool.run(
-                            x=click_origin[0],
-                            y=click_origin[1],
-                            x2=grid_x,
-                            y2=grid_y,
-                            grid=grid,
-                            color=tool_color[selected_color],
-                            radius=tool_size,
-                            radius_type=tool_brush_types[selected_brush],
-                            data=data,
-                            mouse_held=mouse_held[0],
-                        )
-                    else:
-                        if in_grid(grid_x, grid_y, grid.width, grid.height):
-                            toolset[selected_tool].run(
+                if event.button == 1:
+                    if toolset[selected_tool] in mouse_up_tools:
+                        if toolset[selected_tool] == LineTool:
+                            LineTool.run(
                                 x=click_origin[0],
                                 y=click_origin[1],
                                 x2=grid_x,
                                 y2=grid_y,
                                 grid=grid,
                                 color=tool_color[selected_color],
-                                radius=tool_size,
+                                radius=tool_sizes[selected_tool],
                                 radius_type=tool_brush_types[selected_brush],
                                 data=data,
                                 mouse_held=mouse_held[0],
                             )
+                        else:
+                            if in_grid(grid_x, grid_y, grid.width, grid.height):
+                                toolset[selected_tool].run(
+                                    x=click_origin[0],
+                                    y=click_origin[1],
+                                    x2=grid_x,
+                                    y2=grid_y,
+                                    grid=grid,
+                                    color=tool_color[selected_color],
+                                    radius=tool_sizes[selected_tool],
+                                    radius_type=tool_brush_types[selected_brush],
+                                    data=data,
+                                    mouse_held=mouse_held[0],
+                                )
 
             # Scale camera with mouse wheel
             if event.type == MOUSEWHEEL:
@@ -196,7 +208,6 @@ def main():
             ) and in_grid(grid_x, grid_y, grid.width, grid.height):
                 data["mouse_held"] = True
 
-                # Draw overlay if line tool
                 if toolset[selected_tool] in mouse_held_tools:
                     toolset[selected_tool].run(
                         x=grid_x,
@@ -205,12 +216,13 @@ def main():
                         y2=grid_y,
                         grid=grid,
                         color=tool_color[selected_color],
-                        radius=tool_size,
+                        radius=tool_sizes[selected_tool],
                         radius_type=tool_brush_types[selected_brush],
                         data=data,
                         mouse_held=mouse_held[0],
                     )
 
+            # Overlay for line tool (only active when mouse held)
             if toolset[selected_tool] == LineTool:
                 LineTool.run(
                     grid=overlay_grid,
@@ -218,8 +230,13 @@ def main():
                     y=click_origin[1],
                     x2=grid_x,
                     y2=grid_y,
-                    color=tool_color[selected_color],
-                    radius=tool_size,
+                    color=(
+                        tool_color[selected_color][0],
+                        tool_color[selected_color][1],
+                        tool_color[selected_color][2],
+                        100,
+                    ),
+                    radius=tool_sizes[selected_tool],
                     radius_type=tool_brush_types[selected_brush],
                     data=data,
                     mouse_held=mouse_held[0],
@@ -233,6 +250,16 @@ def main():
             camera.set_position(camera.real_x + dx, camera.real_y + dy)
             pan_origin = mouse_pos
             data["mouse_held"] = True
+
+        # Overlay for tools
+        if toolset[selected_tool] in mouse_preview_tools:
+            if in_grid(grid_x, grid_y, grid.width, grid.height):
+                overlay_grid[grid_x, grid_y] = (
+                    tool_color[selected_color][0],
+                    tool_color[selected_color][1],
+                    tool_color[selected_color][2],
+                    100,
+                )
 
         # Clear the screen
         screen.fill((31, 31, 31))

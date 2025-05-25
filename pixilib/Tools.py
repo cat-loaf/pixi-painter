@@ -241,3 +241,6 @@ class LineTool(Tool):
 mouse_held_tools = [PaintTool, EraserTool]
 mouse_up_tools = [LineTool]
 mouse_pressed_tools = [FillTool]
+
+
+mouse_preview_tools = [PaintTool, LineTool, FillTool]

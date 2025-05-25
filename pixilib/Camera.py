@@ -102,8 +102,8 @@ class GridCamera:
                         (
                             cell.x * grid_increment,
                             cell.y * grid_increment,
-                            self.width / self.grid.overlay.width,
-                            self.height / self.grid.overlay.height,
+                            self.width / self.grid.overlay.width * self.scale,
+                            self.height / self.grid.overlay.height * self.scale,
                         ),
                     )
 

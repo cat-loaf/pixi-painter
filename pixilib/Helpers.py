@@ -5,7 +5,7 @@ from collections import deque
 
 
 def clamp(value: Number, min_value: Number, max_value: Number) -> Number:
-    """Clamp a value between a minimum and maximum value
+    """Clamp a value between a minimum and maximum value. End-inclusive
 
     Args:
         value (Number): The value to clamp
@@ -19,7 +19,7 @@ def clamp(value: Number, min_value: Number, max_value: Number) -> Number:
 
 
 def overflow(value: Number, min_value: Number, max_value: Number) -> Number:
-    """Overflow a value between a minimum and maximum value
+    """Overflow a value between a minimum and maximum value. End-inclusive
 
     Args:
         value (Number): The value to overflow
@@ -29,7 +29,7 @@ def overflow(value: Number, min_value: Number, max_value: Number) -> Number:
     Returns:
         Number: The overflowed value, which will be between min_value and max_value
     """
-    return (value - min_value) % (max_value - min_value) + min_value
+    return max_value if value < min_value else min_value if value > max_value else value
 
 
 def stack_rgba(c1: RGBA, c2: RGBA) -> RGBA:
