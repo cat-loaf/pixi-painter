@@ -92,7 +92,9 @@ class GridCamera:
             screen (Surface): The Pygame screen to draw on
             surface (Surface): The surface to draw the overlay grid onto
         """
-        grid_increment = self.scale * (self.width / self.grid.overlay.width)
+        grid_increment_x = (self.width // self.grid.width) * self.scale
+        grid_increment_y = (self.height // self.grid.height) * self.scale
+
         for row in self.grid.overlay.cells:
             for cell in row:
                 if cell.value[3] > 0:
@@ -100,8 +102,8 @@ class GridCamera:
                         surface,
                         cell.value,
                         (
-                            cell.x * grid_increment,
-                            cell.y * grid_increment,
+                            cell.x * grid_increment_x,
+                            cell.y * grid_increment_y,
                             self.width / self.grid.overlay.width * self.scale,
                             self.height / self.grid.overlay.height * self.scale,
                         ),
@@ -151,11 +153,15 @@ class GridCamera:
             surface (Surface): The Pygame surface to draw the grid lines on
             color (RGB): The color of the grid lines
         """
+        grid_increment_x = (self.width // self.grid.width) * self.scale
+        grid_increment_y = (self.height // self.grid.height) * self.scale
 
-        grid_increment = (self.width // self.grid.width) * self.scale
-
-        horizontal_grid_lines = [x * grid_increment for x in range(self.grid.width + 1)]
-        vertical_grid_lines = [y * grid_increment for y in range(self.grid.height + 1)]
+        horizontal_grid_lines = [
+            x * grid_increment_x for x in range(self.grid.width + 1)
+        ]
+        vertical_grid_lines = [
+            y * grid_increment_y for y in range(self.grid.height + 1)
+        ]
         for x in horizontal_grid_lines[: self.grid.width + 1]:
             pygame.draw.line(surface, color, (x, 0), (x, self.height * self.scale))
         for y in vertical_grid_lines[: self.grid.height + 1]:

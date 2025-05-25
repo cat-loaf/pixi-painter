@@ -191,7 +191,7 @@ def flood_fill(
     y: int,
     grid: "ComputedLayeredGrid",
     color: RGBA,
-    repl_color: RGBA,
+    target_color: RGBA,
     layer: int = 0,
     tolerance: float = 0.0,
 ):
@@ -205,17 +205,19 @@ def flood_fill(
         repl_color (RGBA): Color to fill with
         layer (int, optional): Layer to fill on. Defaults to 0.
     """
-    if not in_grid(x, y, grid.width, grid.height):
-        raise ValueError("Coordinates are out of bounds of the grid.")
+    cols, rows = grid.width, grid.height
 
-    rows, cols = grid.width, grid.height
+    if not in_grid(x, y, cols, rows):
+        raise ValueError(
+            f"Coordinates are out of bounds of the grid. {x=} {y=} {cols=} {rows=}"
+        )
 
-    repl_color = grid[x, y, layer].value
+    target_color = grid[x, y, layer].value
 
-    if color_diff(repl_color, color) == 0:
+    if color_diff(target_color, color) == 0:
         return
 
-    visited = [[False] * cols for _ in range(rows)]
+    visited = [[False for _ in range(cols)] for _ in range(rows)]
     queue = deque([(x, y)])
 
     while queue:
@@ -223,13 +225,13 @@ def flood_fill(
 
         if not (0 <= cx < cols and 0 <= cy < rows):
             continue
-        if visited[cx][cy]:
+        if visited[cy][cx]:
             continue
 
         cur_color = grid[cx, cy].value
 
-        if color_diff(cur_color, repl_color) <= tolerance:
+        if color_diff(cur_color, target_color) <= tolerance:
             grid[cx, cy, layer] = color
-            visited[cx][cy] = True
+            visited[cy][cx] = True
 
             queue.extend([(cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)])

@@ -19,21 +19,23 @@ def main():
 
     clock = pygame.time.Clock()
 
+    canvas_size = (16, 9)
+    camera_size = (canvas_size[0] * 20, canvas_size[1] * 20)
+
     # Create a grid and camera
-    layer1 = Grid(16, 16)
-    grid = ComputedLayeredGrid(16, 16)
+    layer1 = Grid(canvas_size[0], canvas_size[1])
+    grid = ComputedLayeredGrid(canvas_size[0], canvas_size[1])
     grid.add_layer(layer1)
 
-    overlay_grid = Grid(16, 16)
+    overlay_grid = Grid(canvas_size[0], canvas_size[1])
     grid.overlay = overlay_grid
 
-    camera_size = 320
     camera = Camera.GridCamera(
         grid,
-        screen_size[0] / 2 - camera_size / 2,
-        screen_size[1] / 2 - camera_size / 2,
-        320,
-        320,
+        screen_size[0] / 2 - camera_size[0] / 2,
+        screen_size[1] / 2 - camera_size[1] / 2,
+        camera_size[0],
+        camera_size[1],
     )
     cam_surface = pygame.Surface((grid.width, grid.height))
 
@@ -86,12 +88,13 @@ def main():
         # grid_increment = camera.width // camera.grid.width
         # grid_x = int((mouse_pos[0] - camera.real_x) / grid_increment)
         # grid_y = int((mouse_pos[1] - camera.real_y) / grid_increment)
-        grid_increment = (camera.width // grid.width) * camera.scale
+        grid_increment_x = (camera.width // grid.width) * camera.scale
+        grid_increment_y = (camera.height // grid.height) * camera.scale
         canvas_mouse_x = mouse_pos[0] - camera.real_x
         canvas_mouse_y = mouse_pos[1] - camera.real_y
 
-        grid_x = int(canvas_mouse_x // grid_increment)
-        grid_y = int(canvas_mouse_y // grid_increment)
+        grid_x = int(canvas_mouse_x // grid_increment_x)
+        grid_y = int(canvas_mouse_y // grid_increment_y)
 
         debug_text["Grid Pos"] = (grid_x, grid_y)
 
