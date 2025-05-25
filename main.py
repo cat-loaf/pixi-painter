@@ -38,7 +38,7 @@ def main():
 
     font: Font = Font(None, 24)
 
-    toolset: list[Tool] = mouse_held_tools + mouse_pressed_tools
+    toolset: list[Tool] = mouse_held_tools + mouse_up_tools + mouse_pressed_tools
     selected_tool: int = 0
 
     tool_color: list[RGBA] = [
@@ -67,6 +67,7 @@ def main():
     }
 
     pan_origin: tuple[int, int] = (0, 0)
+    click_origin: tuple[int, int] = (0, 0)
 
     data = {"x": None, "y": None, "mouse_held": False}
 
@@ -119,7 +120,10 @@ def main():
                 debug_text["Mouse Pressed"] = event.button
 
                 pan_origin = mouse_pos
+                click_origin = (grid_x, grid_y)
+
                 debug_text["Pan Origin"] = pan_origin
+                debug_text["Click Origin"] = click_origin
 
                 if toolset[selected_tool] in mouse_pressed_tools:
                     if in_grid(grid_x, grid_y, grid.width, grid.height):
@@ -137,6 +141,20 @@ def main():
             if event.type == MOUSEBUTTONUP:
                 debug_text["Mouse Pressed"] = None
                 data["mouse_held"] = False
+                if toolset[selected_tool] in mouse_up_tools:
+                    if in_grid(grid_x, grid_y, grid.width, grid.height):
+                        toolset[selected_tool].run(
+                            x=click_origin[0],
+                            y=click_origin[1],
+                            x2=grid_x,
+                            y2=grid_y,
+                            grid=grid,
+                            color=tool_color[selected_color],
+                            radius=tool_size,
+                            radius_type=tool_brush_types[selected_brush],
+                            data=data,
+                            mouse_held=mouse_held[0],
+                        )
 
         # Left mouse
         if (
@@ -150,6 +168,8 @@ def main():
                 toolset[selected_tool].run(
                     x=grid_x,
                     y=grid_y,
+                    x2=grid_x,
+                    y2=grid_y,
                     grid=grid,
                     color=tool_color[selected_color],
                     radius=tool_size,

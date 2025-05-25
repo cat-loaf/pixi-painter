@@ -121,9 +121,10 @@ class EraserTool(Tool):
         grid: Grid,
         x: int,
         y: int,
+        data: dict,
         layer: int = 0,
         radius: int = 0,
-        radiusType: BrushTypes = BrushTypes.CIRCLE,
+        radius_type: BrushTypes = BrushTypes.CIRCLE,
         *args,
         **kwargs,
     ):
@@ -142,7 +143,16 @@ class EraserTool(Tool):
         """
 
         color = (0, 0, 0, 0)  # Transparent color for erasing
-        return PaintTool.run(grid, x, y, color, layer, radius, radiusType)
+        return PaintTool.run(
+            grid=grid,
+            x=x,
+            y=y,
+            color=color,
+            layer=layer,
+            radius=radius,
+            radius_type=radius_type,
+            data=data,
+        )
 
 
 class FillTool(Tool):
@@ -176,6 +186,8 @@ class LineTool(Tool):
         grid: Grid,
         x: int,
         y: int,
+        x2: int,
+        y2: int,
         color: RGBA,
         data: dict,
         mouse_held: bool,
@@ -183,10 +195,11 @@ class LineTool(Tool):
         *args,
         **kwargs,
     ):
-        if mouse_held and data["mouse_held"]:
-            LineTool.mouse_up(grid, x, y, color, data, layer)
+        # if mouse_held and data["mouse_held"]:
+        #     LineTool.mouse_up(grid, x, y, color, data, layer)
 
-        data["mouse_held"] = mouse_held
+        # data["mouse_held"] = mouse_held
+        line(x, y, x2, y2, grid, color, layer)
 
     def update(x: int, y: int, data: dict, mouse_held: bool, *args, **kwargs):
         data["mouse_held"] = mouse_held
@@ -206,5 +219,6 @@ class LineTool(Tool):
         data["y"] = None
 
 
-mouse_held_tools = [PaintTool, EraserTool, LineTool]
+mouse_held_tools = [PaintTool, EraserTool]
+mouse_up_tools = [LineTool]
 mouse_pressed_tools = [FillTool]
