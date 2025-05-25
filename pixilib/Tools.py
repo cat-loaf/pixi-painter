@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from .Grid import Grid
 from .Types import RGBA, BrushTypes
-from .Helpers import color_diff
+from .Helpers import flood_fill, line
 from collections import deque
 
 
@@ -21,6 +21,13 @@ class Tool(ABC):
         """
         pass
 
+    @abstractmethod
+    def update(*args, **kwargs):
+        """
+        Update the tool with the given arguments.
+        """
+        pass
+
 
 class PaintTool(Tool):
     """Tool for painting"""
@@ -33,6 +40,7 @@ class PaintTool(Tool):
         x: int,
         y: int,
         color: RGBA,
+        data: dict,
         layer: int = 0,
         radius: int = 0,
         radius_type: BrushTypes = BrushTypes.CIRCLE,
@@ -58,8 +66,10 @@ class PaintTool(Tool):
             raise ValueError("Coordinates are out of bounds of the grid.")
 
         if radius == 0:
-            grid[x, y] = color
-            return
+            if data["x"] is None or data["y"] is None:
+                data["x"] = x
+                data["y"] = y
+            return LineTool.mouse_up(grid, x, y, color, data, layer)
 
         match radius_type:
             case BrushTypes.SQUARE:
@@ -151,35 +161,50 @@ class FillTool(Tool):
         *args,
         **kwargs,
     ):
-        if x < 0 or x >= grid.width or y < 0 or y >= grid.height:
-            raise ValueError("Coordinates are out of bounds of the grid.")
-
-        rows, cols = grid.width, grid.height
-
-        repl_color = grid[x, y, layer].value
-
-        if color_diff(repl_color, color) == 0:
-            return
-
-        visited = [[False] * cols for _ in range(rows)]
-        queue = deque([(x, y)])
-
-        while queue:
-            cx, cy = queue.popleft()
-
-            if not (0 <= cx < cols and 0 <= cy < rows):
-                continue
-            if visited[cx][cy]:
-                continue
-
-            cur_color = grid[cx, cy].value
-
-            if color_diff(cur_color, repl_color) <= tolerance:
-                grid[cx, cy, layer] = color
-                visited[cx][cy] = True
-
-                queue.extend([(cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)])
+        flood_fill(
+            x, y, grid, color, grid[x, y, layer].value, layer=layer, tolerance=tolerance
+        )
 
 
-mouse_held_tools = [PaintTool, EraserTool]
+class LineTool(Tool):
+    """Tool for drawing lines"""
+
+    def __str__():
+        return "Line Tool"
+
+    def run(
+        grid: Grid,
+        x: int,
+        y: int,
+        color: RGBA,
+        data: dict,
+        mouse_held: bool,
+        layer: int = 0,
+        *args,
+        **kwargs,
+    ):
+        if mouse_held and data["mouse_held"]:
+            LineTool.mouse_up(grid, x, y, color, data, layer)
+
+        data["mouse_held"] = mouse_held
+
+    def update(x: int, y: int, data: dict, mouse_held: bool, *args, **kwargs):
+        data["mouse_held"] = mouse_held
+        if mouse_held:
+            LineTool.mouse_down(x, y, data)
+
+    def mouse_down(x: int, y: int, data: dict):
+        """Store the starting point for the line."""
+        data["x"] = x
+        data["y"] = y
+
+    def mouse_up(grid: Grid, x: int, y: int, color: RGBA, data: dict, layer: int = 0):
+        """Draw the line from the starting point to the current point."""
+        line(data["x"], data["y"], x, y, grid, color, layer)
+        # Reset the starting point
+        data["x"] = None
+        data["y"] = None
+
+
+mouse_held_tools = [PaintTool, EraserTool, LineTool]
 mouse_pressed_tools = [FillTool]

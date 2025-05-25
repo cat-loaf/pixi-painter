@@ -1,6 +1,7 @@
 from numbers import Number
 import numpy as np
 from .Types import RGB, RGBA
+from collections import deque
 
 
 def clamp(value: Number, min_value: Number, max_value: Number) -> Number:
@@ -75,6 +76,18 @@ def rgb_to_packedint(rgb: RGB) -> int:
     return (rgb[0] << 16) | (rgb[1] << 8) | rgb[2]
 
 
+def rgb_to_hex(rgb: RGB | RGBA) -> str:
+    """Convert an RGB color to a hexadecimal string
+
+    Args:
+        rgb (RGB): Color to convert
+
+    Returns:
+        str: Hexadecimal string representation of the RGB color
+    """
+    return "#{:02x}{:02x}{:02x}".format(rgb[0], rgb[1], rgb[2])
+
+
 def color_diff(c1: RGBA, c2: RGBA) -> float:
     """Euclidean distance between two RGBA colors
     Args:
@@ -87,3 +100,121 @@ def color_diff(c1: RGBA, c2: RGBA) -> float:
         + (c1[2] - c2[2]) ** 2
         + (c1[3] - c2[3]) ** 2
     )
+
+
+def in_grid(x: int, y: int, width: int, height: int) -> bool:
+    """Check if coordinates are within the bounds of a grid
+
+    Args:
+        x (int): X coordinate
+        y (int): Y coordinate
+        width (int): Width of the grid
+        height (int): Height of the grid
+
+    Returns:
+        bool: True if coordinates are within bounds, False otherwise
+    """
+    return 0 <= x < width and 0 <= y < height
+
+
+def on_screen(x: int, y: int, screen_width: int, screen_height: int) -> bool:
+    """Check if coordinates are within the bounds of a screen
+
+    Args:
+        x (int): X coordinate
+        y (int): Y coordinate
+        screen_width (int): Width of the screen
+        screen_height (int): Height of the screen
+
+    Returns:
+        bool: True if coordinates are within bounds, False otherwise
+    """
+    return 0 <= x < screen_width and 0 <= y < screen_height
+
+
+def line(
+    x1: int,
+    y1: int,
+    x2: int,
+    y2: int,
+    grid: "ComputedLayeredGrid",  # type: ignore
+    color: RGBA,
+    layer: int = 0,
+):
+    """Draw a line on the grid from (x1, y1) to (x2, y2) using Bresenham's line algorithm
+
+    Args:
+        x1 (int): Starting X coordinate
+        y1 (int): Starting Y coordinate
+        x2 (int): Ending X coordinate
+        y2 (int): Ending Y coordinate
+        grid (ComputedLayeredGrid): Grid to draw the line on
+    """
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+    sx = 1 if x1 < x2 else -1
+    sy = 1 if y1 < y2 else -1
+    err = dx - dy
+
+    while True:
+        if not in_grid(x1, y1, grid.width, grid.height):
+            break
+        grid[x1, y1, layer] = color
+        if x1 == x2 and y1 == y2:
+            break
+        err2 = err * 2
+        if err2 > -dy:
+            err -= dy
+            x1 += sx
+        if err2 < dx:
+            err += dx
+            y1 += sy
+
+
+def flood_fill(
+    x: int,
+    y: int,
+    grid: "ComputedLayeredGrid",
+    color: RGBA,
+    repl_color: RGBA,
+    layer: int = 0,
+    tolerance: float = 0.0,
+):
+    """Flood fill algorithm to fill an area with a color
+
+    Args:
+        x (int): X coordinate to start filling from
+        y (int): Y coordinate to start filling from
+        grid (ComputedLayeredGrid): Grid to fill
+        color (RGBA): Color to replace
+        repl_color (RGBA): Color to fill with
+        layer (int, optional): Layer to fill on. Defaults to 0.
+    """
+    if not in_grid(x, y, grid.width, grid.height):
+        raise ValueError("Coordinates are out of bounds of the grid.")
+
+    rows, cols = grid.width, grid.height
+
+    repl_color = grid[x, y, layer].value
+
+    if color_diff(repl_color, color) == 0:
+        return
+
+    visited = [[False] * cols for _ in range(rows)]
+    queue = deque([(x, y)])
+
+    while queue:
+        cx, cy = queue.popleft()
+
+        if not (0 <= cx < cols and 0 <= cy < rows):
+            continue
+        if visited[cx][cy]:
+            continue
+
+        cur_color = grid[cx, cy].value
+
+        if color_diff(cur_color, repl_color) <= tolerance:
+            grid[cx, cy, layer] = color
+            visited[cx][cy] = True
+
+            queue.extend([(cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)])
