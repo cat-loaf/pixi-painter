@@ -192,14 +192,33 @@ class LineTool(Tool):
         data: dict,
         mouse_held: bool,
         layer: int = 0,
+        radius: int = 0,
         *args,
         **kwargs,
     ):
-        # if mouse_held and data["mouse_held"]:
-        #     LineTool.mouse_up(grid, x, y, color, data, layer)
-
-        # data["mouse_held"] = mouse_held
-        line(x, y, x2, y2, grid, color, layer)
+        if isinstance(grid, Grid):
+            line(
+                x1=x,
+                y1=y,
+                x2=x2,
+                y2=y2,
+                grid=grid,
+                color=color,
+                layer=layer,
+                radius=radius,
+                grid_type="Grid",
+            )
+        else:
+            line(
+                x1=x,
+                y1=y,
+                x2=x2,
+                y2=y2,
+                grid=grid,
+                color=color,
+                layer=layer,
+                radius=radius,
+            )
 
     def update(x: int, y: int, data: dict, mouse_held: bool, *args, **kwargs):
         data["mouse_held"] = mouse_held

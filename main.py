@@ -23,6 +23,10 @@ def main():
     layer1 = Grid(16, 16)
     grid = ComputedLayeredGrid(16, 16)
     grid.add_layer(layer1)
+
+    overlay_grid = Grid(16, 16)
+    grid.overlay = overlay_grid
+
     camera_size = 320
     camera = Camera.GridCamera(
         grid,
@@ -59,11 +63,11 @@ def main():
     selected_brush: int = 0
 
     debug_text: Dict[str:any] = {
-        "dt": 0,
         "Tool": lambda: toolset[selected_tool],
         "Color": lambda: tool_color[selected_color],
         "Tool Size": lambda: tool_size,
         "Brush Type": lambda: tool_brush_types[selected_brush].name,
+        "Camera Scale": lambda: camera.scale,
     }
 
     pan_origin: tuple[int, int] = (0, 0)
@@ -73,15 +77,23 @@ def main():
 
     while running:
         dt = clock.tick(60)
-        debug_text["dt"] = dt
 
         keys_held = pygame.key.get_pressed()
         mouse_held = pygame.mouse.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
 
-        grid_increment = camera.width // camera.grid.width
-        grid_x = int((mouse_pos[0] - camera.real_x) / grid_increment)
-        grid_y = int((mouse_pos[1] - camera.real_y) / grid_increment)
+        # calculate grid increment based on camera scale grid size
+        # grid_increment = camera.width // camera.grid.width
+        # grid_x = int((mouse_pos[0] - camera.real_x) / grid_increment)
+        # grid_y = int((mouse_pos[1] - camera.real_y) / grid_increment)
+        grid_increment = (camera.width // grid.width) * camera.scale
+        canvas_mouse_x = mouse_pos[0] - camera.real_x
+        canvas_mouse_y = mouse_pos[1] - camera.real_y
+
+        grid_x = int(canvas_mouse_x // grid_increment)
+        grid_y = int(canvas_mouse_y // grid_increment)
+
+        debug_text["Grid Pos"] = (grid_x, grid_y)
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -142,8 +154,8 @@ def main():
                 debug_text["Mouse Pressed"] = None
                 data["mouse_held"] = False
                 if toolset[selected_tool] in mouse_up_tools:
-                    if in_grid(grid_x, grid_y, grid.width, grid.height):
-                        toolset[selected_tool].run(
+                    if toolset[selected_tool] == LineTool:
+                        LineTool.run(
                             x=click_origin[0],
                             y=click_origin[1],
                             x2=grid_x,
@@ -155,22 +167,57 @@ def main():
                             data=data,
                             mouse_held=mouse_held[0],
                         )
+                    else:
+                        if in_grid(grid_x, grid_y, grid.width, grid.height):
+                            toolset[selected_tool].run(
+                                x=click_origin[0],
+                                y=click_origin[1],
+                                x2=grid_x,
+                                y2=grid_y,
+                                grid=grid,
+                                color=tool_color[selected_color],
+                                radius=tool_size,
+                                radius_type=tool_brush_types[selected_brush],
+                                data=data,
+                                mouse_held=mouse_held[0],
+                            )
+
+            # Scale camera with mouse wheel
+            if event.type == MOUSEWHEEL:
+                if event.y > 0:
+                    camera.set_scale(clamp(camera.scale * 1.1, 0.1, 10.0))
+                elif event.y < 0:
+                    camera.set_scale(clamp(camera.scale / 1.1, 0.1, 10.0))
 
         # Left mouse
-        if (
-            mouse_held[0]
-            and on_screen(*mouse_pos, screen.get_width(), screen.get_height())
-            and in_grid(grid_x, grid_y, grid.width, grid.height)
-        ):
-            data["mouse_held"] = True
+        if mouse_held[0]:
+            if on_screen(
+                *mouse_pos, screen.get_width(), screen.get_height()
+            ) and in_grid(grid_x, grid_y, grid.width, grid.height):
+                data["mouse_held"] = True
 
-            if toolset[selected_tool] in mouse_held_tools:
-                toolset[selected_tool].run(
-                    x=grid_x,
-                    y=grid_y,
+                # Draw overlay if line tool
+                if toolset[selected_tool] in mouse_held_tools:
+                    toolset[selected_tool].run(
+                        x=grid_x,
+                        y=grid_y,
+                        x2=grid_x,
+                        y2=grid_y,
+                        grid=grid,
+                        color=tool_color[selected_color],
+                        radius=tool_size,
+                        radius_type=tool_brush_types[selected_brush],
+                        data=data,
+                        mouse_held=mouse_held[0],
+                    )
+
+            if toolset[selected_tool] == LineTool:
+                LineTool.run(
+                    grid=overlay_grid,
+                    x=click_origin[0],
+                    y=click_origin[1],
                     x2=grid_x,
                     y2=grid_y,
-                    grid=grid,
                     color=tool_color[selected_color],
                     radius=tool_size,
                     radius_type=tool_brush_types[selected_brush],
@@ -206,6 +253,9 @@ def main():
 
         # Update the display
         pygame.display.flip()
+
+        # Clear overlay grid
+        overlay_grid.clear((0, 0, 0, 0))
 
     quit()
 

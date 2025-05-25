@@ -48,7 +48,8 @@ class GridCamera:
         Args:
             scale (float): Scale factor for the camera, where 1.0 is 100% zoom
         """
-        self.scale = scale
+        # set scale up to two decimal places
+        self.scale = round(scale, 2)
 
     def draw(self, screen: Surface, surface: Surface, background: RGB):
         """Draw the grid onto the surface, scaling it to fit the camera dimensions
@@ -66,12 +67,15 @@ class GridCamera:
 
         # Scale the surface to camera dimensions
         surface_scaled = self._scale_surface_to_camera_dimensions(
-            surface, int(self.width * self.scale), int(self.height * self.scale)
+            surface, self.width, self.height
         )
 
-        self._draw_gridlines(
-            surface_scaled, (0, 0, 0)
-        )  # Draw grid lines on the surface
+        self.draw_overlay_grid(screen, surface_scaled)
+
+        if self.scale >= 0.75:
+            self._draw_gridlines(
+                surface_scaled, (0, 0, 0)
+            )  # Draw grid lines on the surface
 
         screen.blit(
             surface_scaled,
@@ -80,6 +84,28 @@ class GridCamera:
                 int(self.real_y - self.viewport_y * self.scale),
             ),
         )
+
+    def draw_overlay_grid(self, screen: Surface, surface: Surface):
+        """Draw the overlay grid onto the surface, scaling it to fit the camera dimensions
+
+        Args:
+            screen (Surface): The Pygame screen to draw on
+            surface (Surface): The surface to draw the overlay grid onto
+        """
+        grid_increment = self.scale * (self.width / self.grid.overlay.width)
+        for row in self.grid.overlay.cells:
+            for cell in row:
+                if cell.value[3] > 0:
+                    pygame.draw.rect(
+                        surface,
+                        cell.value,
+                        (
+                            cell.x * grid_increment,
+                            cell.y * grid_increment,
+                            self.width / self.grid.overlay.width,
+                            self.height / self.grid.overlay.height,
+                        ),
+                    )
 
     def _generate_surface(self, surface: Surface, background: RGB):
         """Internal Method, Generate surface from grid data
@@ -114,7 +140,9 @@ class GridCamera:
         Returns:
             Surface: _description_
         """
-        return pygame.transform.scale(surface, (width, height))
+        return pygame.transform.scale(
+            surface, (width * self.scale, height * self.scale)
+        )
 
     def _draw_gridlines(self, surface: Surface, color: RGB):
         """Internal Method, Draw grid lines on the surface
@@ -124,9 +152,11 @@ class GridCamera:
             color (RGB): The color of the grid lines
         """
 
-        grid_increment = self.width / self.grid.width
+        grid_increment = (self.width // self.grid.width) * self.scale
 
-        for x in range(0, self.width, int(grid_increment)):
-            pygame.draw.line(surface, color, (x, 0), (x, self.height))
-        for y in range(0, self.height, int(grid_increment)):
-            pygame.draw.line(surface, color, (0, y), (self.width, y))
+        horizontal_grid_lines = [x * grid_increment for x in range(self.grid.width + 1)]
+        vertical_grid_lines = [y * grid_increment for y in range(self.grid.height + 1)]
+        for x in horizontal_grid_lines[: self.grid.width + 1]:
+            pygame.draw.line(surface, color, (x, 0), (x, self.height * self.scale))
+        for y in vertical_grid_lines[: self.grid.height + 1]:
+            pygame.draw.line(surface, color, (0, y), (self.width * self.scale, y))

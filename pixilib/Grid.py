@@ -43,6 +43,8 @@ class ComputedLayeredGrid:
         self.width = width
         self.height = height
 
+        self.overlay: Grid = Grid(width, height)
+
         # All layers
         self.layers: list[Grid] = []
 

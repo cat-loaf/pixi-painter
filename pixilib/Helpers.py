@@ -137,9 +137,11 @@ def line(
     y1: int,
     x2: int,
     y2: int,
-    grid: "ComputedLayeredGrid",  # type: ignore
+    grid: "Grid",  # type: ignore
     color: RGBA,
     layer: int = 0,
+    grid_type: str = "ComputedLayeredGrid",
+    radius: int = 0,
 ):
     """Draw a line on the grid from (x1, y1) to (x2, y2) using Bresenham's line algorithm
 
@@ -159,13 +161,26 @@ def line(
     while True:
         if not in_grid(x1, y1, grid.width, grid.height):
             break
-        grid[x1, y1, layer] = color
+
+        if grid_type == "ComputedLayeredGrid":
+            location = (x1, y1, layer)
+        else:
+            location = (x1, y1)
+
+        grid[location] = color
+        for i in range(-radius, radius):
+            for j in range(-radius, radius):
+                if in_grid(x1 + i, y1 + j, grid.width, grid.height):
+                    grid[x1 + i, y1 + j] = color
+
         if x1 == x2 and y1 == y2:
             break
         err2 = err * 2
+
         if err2 > -dy:
             err -= dy
             x1 += sx
+
         if err2 < dx:
             err += dx
             y1 += sy
