@@ -145,12 +145,12 @@ def main():
                 debug_text["Mouse Pressed"] = event.button
 
                 pan_origin = mouse_pos
-                click_origin = (grid_x, grid_y)
 
                 debug_text["Pan Origin"] = pan_origin
-                debug_text["Click Origin"] = click_origin
 
                 if event.button == 1:
+                    click_origin = (grid_x, grid_y)
+                    debug_text["Click Origin"] = click_origin
                     if toolset[selected_tool] in mouse_pressed_tools:
                         if in_grid(grid_x, grid_y, grid.width, grid.height):
                             toolset[selected_tool].run(
