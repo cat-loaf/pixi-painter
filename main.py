@@ -15,7 +15,7 @@ def main():
 
     # Create a window
     screen_size = (800, 800)
-    screen = pygame.display.set_mode(screen_size)
+    screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE)
 
     clock = pygame.time.Clock()
 
@@ -65,11 +65,13 @@ def main():
     selected_brush: int = 0
 
     debug_text: Dict[str:any] = {
+        "Screen Size": lambda: screen_size,
         "Tool": lambda: toolset[selected_tool],
         "Color": lambda: tool_color[selected_color],
         "Tool Size": lambda: tool_sizes[selected_tool],
         "Brush Type": lambda: tool_brush_types[selected_brush].name,
         "Camera Scale": lambda: camera.scale,
+        "Camera Position": lambda: (camera.real_x, camera.real_y),
     }
 
     pan_origin: tuple[int, int] = (0, 0)
@@ -101,6 +103,9 @@ def main():
         events = pygame.event.get()
         # debug_text["events"] = events
         for event in events:
+            if event.type == VIDEORESIZE:
+                screen_size = (event.w, event.h)
+
             if event.type == QUIT:
                 running = False
 
@@ -250,7 +255,20 @@ def main():
             # Pan the camera
             dx = mouse_pos[0] - pan_origin[0]
             dy = mouse_pos[1] - pan_origin[1]
-            camera.set_position(camera.real_x + dx, camera.real_y + dy)
+            grid_width = camera.width * camera.scale
+            grid_height = camera.height * camera.scale
+            camera.set_position(
+                clamp(
+                    camera.real_x + dx,
+                    grid_increment_x - grid_width,
+                    screen_size[0] - grid_increment_x,
+                ),
+                clamp(
+                    camera.real_y + dy,
+                    grid_increment_y - grid_height,
+                    screen_size[1] - grid_increment_y,
+                ),
+            )
             pan_origin = mouse_pos
             data["mouse_held"] = True
 
