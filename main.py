@@ -19,8 +19,8 @@ def main():
 
     clock = pygame.time.Clock()
 
-    canvas_size = (16, 9)
-    camera_size = (canvas_size[0] * 20, canvas_size[1] * 20)
+    canvas_size = (32, 32)
+    camera_size = (canvas_size[0] * 15, canvas_size[1] * 15)
 
     # Create a grid and camera
     layer1 = Grid(canvas_size[0], canvas_size[1])
@@ -320,14 +320,82 @@ def main():
         if (
             camera.scale >= 0.91
             and toolset[selected_tool] not in no_cursor_grid_preview
+            and in_grid(grid_x, grid_y, grid.width, grid.height)
         ):
             grid_cursor.fill((0, 0, 0, 0))  # Clear the grid cursor
             match tool_brush_types[selected_brush]:
                 case BrushTypes.SQUARE:
                     pygame.draw.rect(grid_cursor, (127, 127, 127), (0, 0, 17, 17), 2)
-                    grid_cursor_size_radius = 17
                 case BrushTypes.CIRCLE | _:
-                    pygame.draw.circle(grid_cursor, (127, 127, 127), (8, 8), 8, width=2)
+                    radius, width, color = (
+                        8,
+                        1 if tool_sizes[selected_tool] > 4 else 2,
+                        (127, 127, 127),
+                    )
+                    pygame.draw.circle(
+                        grid_cursor,
+                        color,
+                        (radius + 1, radius + 1),
+                        radius,
+                        width,
+                        False,
+                        False,
+                        False,
+                        True,
+                    )
+                    pygame.draw.circle(
+                        grid_cursor,
+                        color,
+                        (radius, radius + 1),
+                        radius,
+                        width,
+                        False,
+                        False,
+                        True,
+                        False,
+                    )
+                    pygame.draw.circle(
+                        grid_cursor,
+                        color,
+                        (radius, radius),
+                        radius,
+                        width,
+                        False,
+                        True,
+                        False,
+                        False,
+                    )
+                    pygame.draw.circle(
+                        grid_cursor,
+                        color,
+                        (radius + 1, radius),
+                        radius,
+                        width,
+                        True,
+                        False,
+                        False,
+                        False,
+                    )
+                    pygame.draw.line(
+                        grid_cursor, color, (radius, 0), (radius + width, 0), width
+                    )  # top
+                    pygame.draw.line(
+                        grid_cursor,
+                        color,
+                        (radius, 17 - width),
+                        (radius + width, 17 - width),
+                        width,
+                    )  # bottom
+                    pygame.draw.line(
+                        grid_cursor, color, (0, radius), (0, radius + width), width
+                    )  # left
+                    pygame.draw.line(
+                        grid_cursor,
+                        color,
+                        (17 - width, radius),
+                        (17 - width, radius + width),
+                        width,
+                    )  # right
 
             # Draw cursor plus
             cursor_grid_pos = (
