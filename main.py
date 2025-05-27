@@ -28,6 +28,7 @@ def main():
     grid.add_layer(layer1)
 
     overlay_grid = Grid(canvas_size[0], canvas_size[1])
+    overlay_transparency = 255
     grid.overlay = overlay_grid
 
     camera = Camera.GridCamera(
@@ -79,6 +80,8 @@ def main():
 
     data = {"x": None, "y": None, "mouse_held": False}
 
+    grid_cursor = pygame.Surface((17, 17), pygame.SRCALPHA)
+
     while running:
         dt = clock.tick(60)
 
@@ -87,9 +90,6 @@ def main():
         mouse_pos = pygame.mouse.get_pos()
 
         # calculate grid increment based on camera scale grid size
-        # grid_increment = camera.width // camera.grid.width
-        # grid_x = int((mouse_pos[0] - camera.real_x) / grid_increment)
-        # grid_y = int((mouse_pos[1] - camera.real_y) / grid_increment)
         grid_increment_x = (camera.width // grid.width) * camera.scale
         grid_increment_y = (camera.height // grid.height) * camera.scale
         canvas_mouse_x = mouse_pos[0] - camera.real_x
@@ -242,7 +242,7 @@ def main():
                         tool_color[selected_color][0],
                         tool_color[selected_color][1],
                         tool_color[selected_color][2],
-                        100,
+                        overlay_transparency,
                     ),
                     radius=tool_sizes[selected_tool],
                     radius_type=tool_brush_types[selected_brush],
@@ -275,11 +275,31 @@ def main():
         # Overlay for tools
         if toolset[selected_tool] in mouse_preview_tools:
             if in_grid(grid_x, grid_y, grid.width, grid.height):
-                overlay_grid[grid_x, grid_y] = (
-                    tool_color[selected_color][0],
-                    tool_color[selected_color][1],
-                    tool_color[selected_color][2],
-                    100,
+                # overlay_grid[grid_x, grid_y] = (
+                #     tool_color[selected_color][0],
+                #     tool_color[selected_color][1],
+                #     tool_color[selected_color][2],
+                #     overlay_transparency,
+                # )
+                PaintTool.run(
+                    x=grid_x,
+                    y=grid_y,
+                    grid=overlay_grid,
+                    color=(
+                        tool_color[selected_color][0],
+                        tool_color[selected_color][1],
+                        tool_color[selected_color][2],
+                        overlay_transparency,
+                    ),
+                    radius=(
+                        tool_sizes[selected_tool]
+                        if toolset[selected_tool] not in no_cursor_grid_preview
+                        else 0
+                    ),
+                    radius_type=tool_brush_types[selected_brush],
+                    data=data,
+                    mouse_held=mouse_held[0],
+                    grid_type="Grid",
                 )
 
         # Clear the screen
@@ -295,6 +315,60 @@ def main():
         if toolset[selected_tool] == PaintTool or toolset[selected_tool] == EraserTool:
             data["x"] = grid_x
             data["y"] = grid_y
+
+        # Draw grid cursor
+        if (
+            camera.scale >= 0.91
+            and toolset[selected_tool] not in no_cursor_grid_preview
+        ):
+            grid_cursor.fill((0, 0, 0, 0))  # Clear the grid cursor
+            match tool_brush_types[selected_brush]:
+                case BrushTypes.SQUARE:
+                    pygame.draw.rect(grid_cursor, (127, 127, 127), (0, 0, 17, 17), 2)
+                    grid_cursor_size_radius = 17
+                case BrushTypes.CIRCLE | _:
+                    pygame.draw.circle(grid_cursor, (127, 127, 127), (8, 8), 8, width=2)
+
+            # Draw cursor plus
+            cursor_grid_pos = (
+                grid_x * grid_increment_x + camera.real_x,
+                grid_y * grid_increment_y + camera.real_y,
+            )
+            camera_cell_size = camera.width // grid.width * camera.scale
+
+            # center of scaled grid_cursor should be at center of mouse
+            cell_size = 1
+            grid_cursor_offset = tool_sizes[selected_tool] * camera_cell_size
+            match tool_brush_types[selected_brush]:
+                case BrushTypes.SQUARE:
+                    match tool_sizes[selected_tool]:
+                        case 0:
+                            cell_size = 1
+                            grid_cursor_offset = 0
+                        case 1:
+                            cell_size = 2
+                        case _:
+                            cell_size = tool_sizes[selected_tool] * 2 - 1
+                            grid_cursor_offset = (
+                                tool_sizes[selected_tool] - 1
+                            ) * camera_cell_size
+
+                case BrushTypes.CIRCLE | _:
+                    cell_size = tool_sizes[selected_tool] * 2 + 1
+
+            scaled_cell_size = camera_cell_size * cell_size
+            scaled_grid_cursor = pygame.transform.scale(
+                grid_cursor, (scaled_cell_size, scaled_cell_size)
+            )
+
+            screen.blit(
+                scaled_grid_cursor,
+                (
+                    cursor_grid_pos[0] - grid_cursor_offset,
+                    cursor_grid_pos[1] - grid_cursor_offset,
+                ),
+                special_flags=pygame.BLEND_SUB,
+            )
 
         # Draw debug information
         drawDebugView(font, screen, (255, 255, 255), debug_text)

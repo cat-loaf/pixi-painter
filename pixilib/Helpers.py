@@ -9,13 +9,19 @@ def clamp(value: Number, min_value: Number, max_value: Number) -> Number:
 
     Args:
         value (Number): The value to clamp
-        min_value (Number): The minimum value
-        max_value (Number): The maximum value
+        min_value (Number | None): The minimum value, if None, no lower bound
+        max_value (Number | None): The maximum value, if None, no upper bound
 
     Returns:
         Number: The clamped value, which will be between min_value and max_value
     """
-    return max(min(value, max_value), min_value)
+    if min_value is None and max_value is None:
+        return value
+    if min_value is None:
+        return min(value, max_value)
+    if max_value is None:
+        return max(value, min_value)
+    return max(min_value, min(value, max_value))
 
 
 def overflow(value: Number, min_value: Number, max_value: Number) -> Number:
@@ -23,13 +29,20 @@ def overflow(value: Number, min_value: Number, max_value: Number) -> Number:
 
     Args:
         value (Number): The value to overflow
-        min_value (Number): The minimum value
-        max_value (Number): The maximum value
+        min_value (Number | None): The minimum value, if None, no lower bound
+        max_value (Number | None): The maximum value, if None, no upper bound
 
     Returns:
         Number: The overflowed value, which will be between min_value and max_value
     """
-    return max_value if value < min_value else min_value if value > max_value else value
+    if min_value is None and max_value is None:
+        return value
+    if min_value is None:
+        return value % max_value
+    if max_value is None:
+        return value % min_value
+    range_size = max_value - min_value + 1
+    return (value - min_value) % range_size + min_value
 
 
 def stack_rgba(c1: RGBA, c2: RGBA) -> RGBA:

@@ -15,14 +15,22 @@ class Grid:
         ]
 
     def __getitem__(self, index: tuple[int, int]):
-        x, y = index
+        if len(index) > 2:
+            x, y, _ = index
+        else:
+            x, y = index
+
         if 0 <= x < self.width and 0 <= y < self.height:
             return self.cells[y][x]
         else:
             raise IndexError("Index out of bounds")
 
     def __setitem__(self, index: tuple[int, int], value: RGBA):
-        x, y = index
+        if len(index) > 2:
+            x, y, _ = index
+        else:
+            x, y = index
+
         if 0 <= x < self.width and 0 <= y < self.height:
             self.cells[y][x].set_color(value)
         else:

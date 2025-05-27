@@ -65,14 +65,15 @@ class GridCamera:
         # Convert grid to surface (performantly)
         self._generate_surface(surface, background)
 
+        # Draw overlay grid
+        self.draw_overlay_grid(screen, surface)
+
         # Scale the surface to camera dimensions
         surface_scaled = self._scale_surface_to_camera_dimensions(
             surface, self.width, self.height
         )
 
-        self.draw_overlay_grid(screen, surface_scaled)
-
-        if self.scale >= 0.75:
+        if self.scale >= 0.91:
             self._draw_gridlines(
                 surface_scaled, (0, 0, 0)
             )  # Draw grid lines on the surface
@@ -92,30 +93,45 @@ class GridCamera:
             screen (Surface): The Pygame screen to draw on
             surface (Surface): The surface to draw the overlay grid onto
         """
-        grid_increment_x = (self.width // self.grid.width) * self.scale
-        grid_increment_y = (self.height // self.grid.height) * self.scale
+        # grid_increment_x = (self.width // self.grid.width) * self.scale
+        # grid_increment_y = (self.height // self.grid.height) * self.scale
 
-        for row in self.grid.overlay.cells:
-            for cell in row:
-                if cell.value[3] > 0:
-                    pygame.draw.rect(
-                        surface,
-                        cell.value,
-                        (
-                            cell.x * grid_increment_x,
-                            cell.y * grid_increment_y,
-                            self.width / self.grid.overlay.width * self.scale,
-                            self.height / self.grid.overlay.height * self.scale,
-                        ),
+        # for grid_y, row in enumerate(self.grid.overlay.cells):
+        #     for grid_x, cell in enumerate(row):
+        #         if cell.value[3] > 0:
+        #             pygame.draw.rect(
+        #                 surface,
+        #                 rgba_to_rgb(cell.value, self.grid[grid_x, grid_y].value),
+        #                 (
+        #                     cell.x * grid_increment_x,
+        #                     cell.y * grid_increment_y,
+        #                     self.width / self.grid.overlay.width * self.scale,
+        #                     self.height / self.grid.overlay.height * self.scale,
+        #                 ),
+        #             )
+        pixel_array = pygame.surfarray.pixels2d(surface)
+        for y in range(self.grid.overlay.height):
+            for x in range(self.grid.overlay.width):
+                if self.grid.overlay.cells[y][x].value[3] == 0:
+                    continue
+                color = rgb_to_packedint(
+                    rgba_to_rgb(
+                        self.grid.overlay.cells[y][x].value,
+                        (0, 0, 0),  # Default background color for overlay
                     )
+                )
+                pixel_array[x, y] = color
 
-    def _generate_surface(self, surface: Surface, background: RGB):
+    def _generate_surface(
+        self, surface: Surface, background: RGB, backgrounds: list[RGB] = None
+    ):
         """Internal Method, Generate surface from grid data
         Writes pixel data directly to the surface's pixel array for performance
 
         Args:
             surface (Surface): The Pygame surface to draw the grid onto
             background (RGB): The background color to fill the surface with, used for RGBA to RGB conversion
+            backgrounds (list[RGB], optional): List of background colors for each layer. Will use backgrounds if provided. Defaults to None.
         """
         pixel_array = pygame.surfarray.pixels2d(surface)
         for y in range(self.grid.height):
@@ -123,7 +139,7 @@ class GridCamera:
                 color = rgb_to_packedint(
                     rgba_to_rgb(
                         self.grid.get_computed_grid()[x, y].value,
-                        background,
+                        backgrounds[y][x].value if backgrounds else background,
                     )
                 )
                 pixel_array[x, y] = color

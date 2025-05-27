@@ -76,12 +76,12 @@ class PaintTool(Tool):
                 if radius == 1:
                     if 0 <= x < grid.width and 0 <= y < grid.height:
                         grid[x, y, layer] = color
-                    if 0 <= x + 1 < grid.width and 0 <= y < grid.height:
-                        grid[x + 1, y, layer] = color
-                    if 0 <= x < grid.width and 0 <= y + 1 < grid.height:
-                        grid[x, y + 1, layer] = color
-                    if 0 <= x + 1 < grid.width and 0 <= y + 1 < grid.height:
-                        grid[x + 1, y + 1, layer] = color
+                    if 0 <= x - 1 < grid.width and 0 <= y < grid.height:
+                        grid[x - 1, y, layer] = color
+                    if 0 <= x < grid.width and 0 <= y - 1 < grid.height:
+                        grid[x, y - 1, layer] = color
+                    if 0 <= x - 1 < grid.width and 0 <= y - 1 < grid.height:
+                        grid[x - 1, y - 1, layer] = color
                     return
 
                 radius -= 1
@@ -244,3 +244,4 @@ mouse_pressed_tools = [FillTool]
 
 
 mouse_preview_tools = [PaintTool, LineTool, FillTool]
+no_cursor_grid_preview = [LineTool, FillTool]
