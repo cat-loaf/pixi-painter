@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from .Grid import Grid
 from .Types import RGBA, BrushTypes
-from .Helpers import flood_fill, line
+from .Helpers import flood_fill, line, chunks
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Tool(ABC):
@@ -63,7 +64,7 @@ class PaintTool(Tool):
         """
 
         if x < 0 or x >= grid.width or y < 0 or y >= grid.height:
-            raise ValueError("Coordinates are out of bounds of the grid.")
+            return
 
         if radius == 0:
             if data["x"] is None or data["y"] is None:
@@ -71,44 +72,44 @@ class PaintTool(Tool):
                 data["y"] = y
             return LineTool.mouse_up(grid, x, y, color, data, layer)
 
+        coords_to_paint = []
+
         match radius_type:
             case BrushTypes.SQUARE:
                 if radius == 1:
                     if 0 <= x < grid.width and 0 <= y < grid.height:
-                        grid[x, y, layer] = color
+                        coords_to_paint.append((x, y))
                     if 0 <= x - 1 < grid.width and 0 <= y < grid.height:
-                        grid[x - 1, y, layer] = color
+                        coords_to_paint.append((x - 1, y))
                     if 0 <= x < grid.width and 0 <= y - 1 < grid.height:
-                        grid[x, y - 1, layer] = color
+                        coords_to_paint.append((x, y - 1))
                     if 0 <= x - 1 < grid.width and 0 <= y - 1 < grid.height:
-                        grid[x - 1, y - 1, layer] = color
-                    return
+                        coords_to_paint.append((x - 1, y - 1))
 
                 radius -= 1
 
                 for i in range(-radius, radius + 1):
                     for j in range(-radius, radius + 1):
-                        if (
-                            x + i < 0
-                            or x + i >= grid.width
-                            or y + j < 0
-                            or y + j >= grid.height
-                        ):
-                            continue
-                        grid[x + i, y + j, layer] = color
+                        xi, yj = x + i, y + j
+                        if 0 <= xi < grid.width and 0 <= yj < grid.height:
+                            coords_to_paint.append((xi, yj))
 
             case BrushTypes.CIRCLE | _:
                 for i in range(-radius, radius + 1):
                     for j in range(-radius, radius + 1):
                         if i * i + j * j <= radius * radius:
-                            if (
-                                x + i < 0
-                                or x + i >= grid.width
-                                or y + j < 0
-                                or y + j >= grid.height
-                            ):
-                                continue
-                            grid[x + i, y + j, layer] = color
+                            xi, yj = x + i, y + j
+                            if 0 <= xi < grid.width and 0 <= yj < grid.height:
+                                coords_to_paint.append((xi, yj))
+
+        batch_size = 256 if radius >= 4 else 64
+
+        def paint_batch(batch):
+            for pos in batch:
+                grid[*pos] = color
+
+        with ThreadPoolExecutor() as executor:
+            executor.map(paint_batch, chunks(coords_to_paint, batch_size))
 
 
 class EraserTool(Tool):
@@ -244,4 +245,4 @@ mouse_pressed_tools = [FillTool]
 
 
 mouse_preview_tools = [PaintTool, LineTool, FillTool]
-no_cursor_grid_preview = [LineTool, FillTool]
+no_cursor_grid_preview = []

@@ -1,4 +1,5 @@
 from numbers import Number
+from typing import Iterable
 import numpy as np
 from .Types import RGB, RGBA
 from collections import deque
@@ -55,13 +56,17 @@ def stack_rgba(c1: RGBA, c2: RGBA) -> RGBA:
     Returns:
         RGBA: Stacked RGBA color resulting from blending c1 and c2
     """
-    alpha = 255 - ((255 - c1[3]) * (255 - c2[3]) / 255)
-    if alpha == 0:
+    a1, a2 = c1[3] / 255.0, c2[3] / 255.0
+    out_a = a1 + a2 * (1 - a1)
+
+    if out_a == 0:
         return (0, 0, 0, 0)
-    r = (c1[0] * c1[3] + c2[0] * c2[3] * (255 - c1[3]) / 255) / alpha
-    g = (c1[1] * c1[3] + c2[1] * c2[3] * (255 - c1[3]) / 255) / alpha
-    b = (c1[2] * c1[3] + c2[2] * c2[3] * (255 - c1[3]) / 255) / alpha
-    return (int(r), int(g), int(b), int(alpha))
+
+    r = (c1[0] * a1 + c2[0] * a2 * (1 - a1)) / out_a
+    g = (c1[1] * a1 + c2[1] * a2 * (1 - a1)) / out_a
+    b = (c1[2] * a1 + c2[2] * a2 * (1 - a1)) / out_a
+
+    return (int(r + 0.5), int(g + 0.5), int(b + 0.5), int(out_a * 255 + 0.5))
 
 
 def rgba_to_rgb(rgba: RGBA, background: RGB = (255, 255, 255)) -> RGB:
@@ -74,7 +79,15 @@ def rgba_to_rgb(rgba: RGBA, background: RGB = (255, 255, 255)) -> RGB:
     Returns:
         RGB: The RGB color resulting from the conversion
     """
-    return stack_rgba(rgba, (background[0], background[1], background[2], 255))[:3]
+    r, g, b, a = rgba
+    alpha = a / 255.0
+    inv_alpha = 1 - alpha
+
+    r_out = int(r * alpha + background[0] * inv_alpha + 0.5)
+    g_out = int(g * alpha + background[1] * inv_alpha + 0.5)
+    b_out = int(b * alpha + background[2] * inv_alpha + 0.5)
+
+    return (r_out, g_out, b_out)
 
 
 def rgb_to_packedint(rgb: RGB) -> int:
@@ -248,3 +261,17 @@ def flood_fill(
             visited[cy][cx] = True
 
             queue.extend([(cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)])
+
+
+def chunks(l: list, batch_size: int) -> Iterable[list]:
+    """Yield successive n-sized chunks from l.
+
+    Args:
+        l (list): List to chunk
+        batch_size (int): Size of each chunk
+
+    Yields:
+        list: Chunks of the original list
+    """
+    for i in range(0, len(l), batch_size):
+        yield l[i : i + batch_size]

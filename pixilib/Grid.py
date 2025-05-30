@@ -22,8 +22,7 @@ class Grid:
 
         if 0 <= x < self.width and 0 <= y < self.height:
             return self.cells[y][x]
-        else:
-            raise IndexError("Index out of bounds")
+        return None
 
     def __setitem__(self, index: tuple[int, int], value: RGBA):
         if len(index) > 2:
@@ -33,8 +32,7 @@ class Grid:
 
         if 0 <= x < self.width and 0 <= y < self.height:
             self.cells[y][x].set_color(value)
-        else:
-            raise IndexError("Index out of bounds")
+        return None
 
     def clear(self, value: RGBA = (0, 0, 0, 0)):
         """Clear the grid by setting all cells to the default value"""
@@ -84,8 +82,9 @@ class ComputedLayeredGrid:
         for y in range(self.height):
             for x in range(self.width):
                 # Update only if computed grid is different from actual computed grid
-                if self._computed_grid[x, y].value != self._compute_cell(x, y):
-                    self._computed_grid[x, y].value = self._compute_cell(x, y)
+                computed_cell = self._compute_cell(x, y)
+                if self._computed_grid[x, y].value != computed_cell:
+                    self._computed_grid[x, y] = computed_cell
 
     def _compute_cell(self, x: int, y: int) -> RGBA:
         """Internal Method, Stack all RGBA values from all layers at `(x,y)` and return computed RGBA value
@@ -97,29 +96,21 @@ class ComputedLayeredGrid:
         Returns:
             RGBA: stacked RGBA value of all layers at `(x,y)`
         """
-        cells: list[RGBA] = []
-        i: int = len(self.layers) - 1  # Reverse order (start from highest layer)
-        while i >= 0:
-            cell = self.layers[i][x, y]
-            if cell.value[3] > 0:  # If not transparent, include in calculation
-                cells.append(cell.value)
-            i -= 1
+        cells = [
+            self.layers[i][x, y].value
+            for i in reversed(range(len(self.layers)))
+            if self.layers[i][x, y].value[3] > 0
+        ]
 
-        # If no colors, return transparent black
-        if len(cells) == 0:
+        if not cells:
             return (0, 0, 0, 0)
 
-        # Calculate stacked color
-        i = 0
-        while len(cells) > 1:
-            c1 = cells[i]
-            c2 = cells[i + 1]
-            new_color = stack_rgba(c1, c2)
-            cells.pop(i)
-            cells.pop(i)
-            cells.insert(i, new_color)
+        # Blend from bottom to top (reverse of how we collected them)
+        result = cells[-1]
+        for color in reversed(cells[:-1]):
+            result = stack_rgba(color, result)
 
-        return cells[0]
+        return result
 
     def get_computed_grid(self) -> Grid:
         """Returns computed grid"""
@@ -142,8 +133,7 @@ class ComputedLayeredGrid:
             and 0 <= layer < len(self.layers)
         ):
             return self.layers[layer][x, y]
-        else:
-            raise IndexError("Index out of bounds")
+        return None
 
     def __setitem__(self, index: tuple[int, int, int], value: RGBA):
         if len(index) != 3:
@@ -157,9 +147,10 @@ class ComputedLayeredGrid:
             and 0 <= layer < len(self.layers)
         ):
             self.layers[layer][x, y] = value
-            self._update_computed_grid()
-        else:
-            raise IndexError("Index out of bounds")
+            computed_cell = self._compute_cell(x, y)
+            if self._computed_grid[x, y].value != computed_cell:
+                self._computed_grid[x, y] = computed_cell
+        return
 
     def clear(self, value: RGBA = (0, 0, 0, 0), layer: int = -1):
         """Clear the grid or a specific layer by setting all cells to the default value
@@ -180,5 +171,5 @@ class ComputedLayeredGrid:
             if 0 <= layer < len(self.layers):
                 self.layers[layer].clear(value)
             else:
-                raise IndexError("Layer index out of bounds")
+                return
         self._update_computed_grid()

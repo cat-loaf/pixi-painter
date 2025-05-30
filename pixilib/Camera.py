@@ -134,16 +134,19 @@ class GridCamera:
             backgrounds (list[RGB], optional): List of background colors for each layer. Will use backgrounds if provided. Defaults to None.
         """
         pixel_array = pygame.surfarray.pixels2d(surface)
-        for y in range(self.grid.height):
-            for x in range(self.grid.width):
-                color = rgb_to_packedint(
-                    rgba_to_rgb(
-                        self.grid.get_computed_grid()[x, y].value,
-                        backgrounds[y][x].value if backgrounds else background,
-                    )
-                )
-                pixel_array[x, y] = color
-        del pixel_array
+        grid = self.grid.get_computed_grid()  # Avoid repeated access
+        use_layer_backgrounds = backgrounds is not None
+        height, width = self.grid.height, self.grid.width
+
+        for y in range(height):
+            bg_row = backgrounds[y] if use_layer_backgrounds else None
+            for x in range(width):
+                rgba = grid[x, y].value
+                bg_color = bg_row[x].value if use_layer_backgrounds else background
+                rgb = rgba_to_rgb(rgba, bg_color)
+                pixel_array[x, y] = rgb_to_packedint(rgb)
+
+        del pixel_array  # Unlock the surface
 
     def _scale_surface_to_camera_dimensions(
         self, surface: Surface, width: int, height: int

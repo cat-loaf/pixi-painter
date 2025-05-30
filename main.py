@@ -1,5 +1,6 @@
 from typing import Dict
 import pygame
+import time
 from pygame.locals import *
 from pygame.font import Font
 import pixilib.Camera as Camera
@@ -65,7 +66,10 @@ def main():
     ]
     selected_brush: int = 0
 
+    dt: float = 0.0
+
     debug_text: Dict[str:any] = {
+        "Δt": lambda: dt,
         "Screen Size": lambda: screen_size,
         "Tool": lambda: toolset[selected_tool],
         "Color": lambda: tool_color[selected_color],
@@ -214,8 +218,6 @@ def main():
             if on_screen(
                 *mouse_pos, screen.get_width(), screen.get_height()
             ) and in_grid(grid_x, grid_y, grid.width, grid.height):
-                data["mouse_held"] = True
-
                 if toolset[selected_tool] in mouse_held_tools:
                     toolset[selected_tool].run(
                         x=grid_x,
@@ -227,7 +229,7 @@ def main():
                         radius=tool_sizes[selected_tool],
                         radius_type=tool_brush_types[selected_brush],
                         data=data,
-                        mouse_held=mouse_held[0],
+                        mouse_held=True,
                     )
 
             # Overlay for line tool (only active when mouse held)
@@ -273,39 +275,62 @@ def main():
             data["mouse_held"] = True
 
         # Overlay for tools
-        if toolset[selected_tool] in mouse_preview_tools:
-            if in_grid(grid_x, grid_y, grid.width, grid.height):
-                # overlay_grid[grid_x, grid_y] = (
-                #     tool_color[selected_color][0],
-                #     tool_color[selected_color][1],
-                #     tool_color[selected_color][2],
-                #     overlay_transparency,
-                # )
-                PaintTool.run(
-                    x=grid_x,
-                    y=grid_y,
-                    grid=overlay_grid,
-                    color=(
-                        tool_color[selected_color][0],
-                        tool_color[selected_color][1],
-                        tool_color[selected_color][2],
-                        overlay_transparency,
-                    ),
-                    radius=(
-                        tool_sizes[selected_tool]
-                        if toolset[selected_tool] not in no_cursor_grid_preview
-                        else 0
-                    ),
-                    radius_type=tool_brush_types[selected_brush],
-                    data=data,
-                    mouse_held=mouse_held[0],
-                    grid_type="Grid",
-                )
+        if toolset[selected_tool] == LineTool:
+            LineTool.run(
+                x=grid_x,
+                y=grid_y,
+                x2=grid_x,
+                y2=grid_y,
+                grid=overlay_grid,
+                color=(
+                    tool_color[selected_color][0],
+                    tool_color[selected_color][1],
+                    tool_color[selected_color][2],
+                    overlay_transparency,
+                ),
+                radius=(
+                    tool_sizes[selected_tool]
+                    if toolset[selected_tool] not in no_cursor_grid_preview
+                    else 0
+                ),
+                radius_type=BrushTypes.SQUARE,
+                data=data,
+                mouse_held=mouse_held[0],
+                grid_type="Grid",
+            )
+        # if toolset[selected_tool] in mouse_preview_tools:
+        #     if in_grid(grid_x, grid_y, grid.width, grid.height):
+        #         # overlay_grid[grid_x, grid_y] = (
+        #         #     tool_color[selected_color][0],
+        #         #     tool_color[selected_color][1],
+        #         #     tool_color[selected_color][2],
+        #         #     overlay_transparency,
+        #         # )
+        #         PaintTool.run(
+        #             x=grid_x,
+        #             y=grid_y,
+        #             grid=overlay_grid,
+        #             color=(
+        #                 tool_color[selected_color][0],
+        #                 tool_color[selected_color][1],
+        #                 tool_color[selected_color][2],
+        #                 overlay_transparency,
+        #             ),
+        #             radius=(
+        #                 tool_sizes[selected_tool]
+        #                 if toolset[selected_tool] not in no_cursor_grid_preview
+        #                 else 0
+        #             ),
+        #             radius_type=tool_brush_types[selected_brush],
+        #             data=data,
+        #             mouse_held=mouse_held[0],
+        #             grid_type="Grid",
+        #             use_executor=False,
+        #         )
 
         # Clear the screen
         screen.fill((31, 31, 31))
 
-        # Draw the grid using the camera
         camera.draw(screen, cam_surface, (255, 255, 255))
 
         # Update tool data
@@ -438,10 +463,9 @@ def main():
                 special_flags=pygame.BLEND_SUB,
             )
 
-        # Draw debug information
         drawDebugView(font, screen, (255, 255, 255), debug_text)
 
-        # Update the display
+        # Update display
         pygame.display.flip()
 
         # Clear overlay grid
@@ -450,4 +474,13 @@ def main():
     quit()
 
 
-main()
+# If the script is run with the argument "profile", use cProfile to profile the main function
+from sys import argv
+
+if len(argv) > 1 and argv[1] == "profile":
+    import cProfile as profile
+
+    profile.run("main()")
+
+else:
+    main()
