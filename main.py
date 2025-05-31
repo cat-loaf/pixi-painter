@@ -20,8 +20,17 @@ def main():
 
     clock = pygame.time.Clock()
 
-    canvas_size = (32, 32)
-    camera_size = (canvas_size[0] * 15, canvas_size[1] * 15)
+    canvas_size = (64, 64)
+
+    # calc cam proportion, then cam scale according to prop x and prop y
+    cam_prop_x = canvas_size[0] / (canvas_size[0] + canvas_size[1])
+    cam_prop_y = 1 - cam_prop_x
+    cam_size_scale = max(
+        1,
+        int((480 / canvas_size[0]) * cam_prop_x + (480 / canvas_size[1]) * cam_prop_y),
+    )
+    print(cam_prop_x, cam_prop_y, cam_size_scale)
+    camera_size = (canvas_size[0] * cam_size_scale, canvas_size[1] * cam_size_scale)
 
     # Create a grid and camera
     layer1 = Grid(canvas_size[0], canvas_size[1])
@@ -298,35 +307,35 @@ def main():
                 mouse_held=mouse_held[0],
                 grid_type="Grid",
             )
-        # if toolset[selected_tool] in mouse_preview_tools:
-        #     if in_grid(grid_x, grid_y, grid.width, grid.height):
-        #         # overlay_grid[grid_x, grid_y] = (
-        #         #     tool_color[selected_color][0],
-        #         #     tool_color[selected_color][1],
-        #         #     tool_color[selected_color][2],
-        #         #     overlay_transparency,
-        #         # )
-        #         PaintTool.run(
-        #             x=grid_x,
-        #             y=grid_y,
-        #             grid=overlay_grid,
-        #             color=(
-        #                 tool_color[selected_color][0],
-        #                 tool_color[selected_color][1],
-        #                 tool_color[selected_color][2],
-        #                 overlay_transparency,
-        #             ),
-        #             radius=(
-        #                 tool_sizes[selected_tool]
-        #                 if toolset[selected_tool] not in no_cursor_grid_preview
-        #                 else 0
-        #             ),
-        #             radius_type=tool_brush_types[selected_brush],
-        #             data=data,
-        #             mouse_held=mouse_held[0],
-        #             grid_type="Grid",
-        #             use_executor=False,
-        #         )
+        if toolset[selected_tool] in mouse_preview_tools:
+            if in_grid(grid_x, grid_y, grid.width, grid.height):
+                # overlay_grid[grid_x, grid_y] = (
+                #     tool_color[selected_color][0],
+                #     tool_color[selected_color][1],
+                #     tool_color[selected_color][2],
+                #     overlay_transparency,
+                # )
+                PaintTool.run(
+                    x=grid_x,
+                    y=grid_y,
+                    grid=overlay_grid,
+                    color=(
+                        tool_color[selected_color][0],
+                        tool_color[selected_color][1],
+                        tool_color[selected_color][2],
+                        overlay_transparency,
+                    ),
+                    radius=(
+                        tool_sizes[selected_tool]
+                        if toolset[selected_tool] not in no_cursor_grid_preview
+                        else 0
+                    ),
+                    radius_type=tool_brush_types[selected_brush],
+                    data=data,
+                    mouse_held=mouse_held[0],
+                    grid_type="Grid",
+                    use_executor=False,
+                )
 
         # Clear the screen
         screen.fill((31, 31, 31))
