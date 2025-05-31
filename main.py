@@ -297,11 +297,7 @@ def main():
                     tool_color[selected_color][2],
                     overlay_transparency,
                 ),
-                radius=(
-                    tool_sizes[selected_tool]
-                    if toolset[selected_tool] not in no_cursor_grid_preview
-                    else 0
-                ),
+                radius=(tool_sizes[selected_tool]),
                 radius_type=BrushTypes.SQUARE,
                 data=data,
                 mouse_held=mouse_held[0],

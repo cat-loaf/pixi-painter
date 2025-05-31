@@ -245,4 +245,4 @@ mouse_pressed_tools = [FillTool]
 
 
 mouse_preview_tools = [PaintTool, LineTool, FillTool]
-no_cursor_grid_preview = []
+no_cursor_grid_preview = [LineTool]
