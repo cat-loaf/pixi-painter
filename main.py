@@ -29,7 +29,6 @@ def main():
         1,
         int((480 / canvas_size[0]) * cam_prop_x + (480 / canvas_size[1]) * cam_prop_y),
     )
-    print(cam_prop_x, cam_prop_y, cam_size_scale)
     camera_size = (canvas_size[0] * cam_size_scale, canvas_size[1] * cam_size_scale)
 
     # Create a grid and camera
@@ -79,13 +78,14 @@ def main():
 
     debug_text: Dict[str:any] = {
         "Δt": lambda: dt,
-        "Screen Size": lambda: screen_size,
         "Tool": lambda: toolset[selected_tool],
         "Color": lambda: tool_color[selected_color],
         "Tool Size": lambda: tool_sizes[selected_tool],
         "Brush Type": lambda: tool_brush_types[selected_brush].name,
+        "Mouse Position": (0, 0),
         "Camera Scale": lambda: camera.scale,
         "Camera Position": lambda: (camera.real_x, camera.real_y),
+        "Canvas Mouse": (0, 0),
     }
 
     pan_origin: tuple[int, int] = (0, 0)
@@ -103,13 +103,12 @@ def main():
         mouse_pos = pygame.mouse.get_pos()
 
         # calculate grid increment based on camera scale grid size
-        grid_increment_x = (camera.width // grid.width) * camera.scale
-        grid_increment_y = (camera.height // grid.height) * camera.scale
+        grid_incr = (camera.width // grid.width) * camera.scale
         canvas_mouse_x = mouse_pos[0] - camera.real_x
         canvas_mouse_y = mouse_pos[1] - camera.real_y
 
-        grid_x = int(canvas_mouse_x // grid_increment_x)
-        grid_y = int(canvas_mouse_y // grid_increment_y)
+        grid_x = int(canvas_mouse_x // grid_incr)
+        grid_y = int(canvas_mouse_y // grid_incr)
 
         debug_text["Grid Pos"] = (grid_x, grid_y)
 
@@ -218,9 +217,22 @@ def main():
             # Scale camera with mouse wheel
             if event.type == MOUSEWHEEL:
                 if event.y > 0:
-                    camera.set_scale(clamp(camera.scale * 1.1, 0.1, 10.0))
+                    # camera.set_scale(clamp(camera.scale * 1.1, 0.1, 10.0))
+                    camera.zoom_on(
+                        mouse_pos,
+                        clamp(camera.scale * 1.1, 0.1, 10.0),
+                    )
                 elif event.y < 0:
-                    camera.set_scale(clamp(camera.scale / 1.1, 0.1, 10.0))
+                    # camera.set_scale(clamp(camera.scale / 1.1, 0.1, 10.0))
+                    camera.zoom_on(
+                        mouse_pos,
+                        clamp(camera.scale / 1.1, 0.1, 10.0),
+                    )
+        debug_text["Mouse Position"] = mouse_pos
+        debug_text["Canvas Mouse"] = (
+            mouse_pos[0] - camera.real_x,
+            mouse_pos[1] - camera.real_y,
+        )
 
         # Left mouse
         if mouse_held[0]:
@@ -271,13 +283,13 @@ def main():
             camera.set_position(
                 clamp(
                     camera.real_x + dx,
-                    grid_increment_x - grid_width,
-                    screen_size[0] - grid_increment_x,
+                    grid_incr - grid_width,
+                    screen_size[0] - grid_incr,
                 ),
                 clamp(
                     camera.real_y + dy,
-                    grid_increment_y - grid_height,
-                    screen_size[1] - grid_increment_y,
+                    grid_incr - grid_height,
+                    screen_size[1] - grid_incr,
                 ),
             )
             pan_origin = mouse_pos
@@ -429,8 +441,8 @@ def main():
 
             # Draw cursor plus
             cursor_grid_pos = (
-                grid_x * grid_increment_x + camera.real_x,
-                grid_y * grid_increment_y + camera.real_y,
+                grid_x * grid_incr + camera.real_x,
+                grid_y * grid_incr + camera.real_y,
             )
             camera_cell_size = camera.width // grid.width * camera.scale
 

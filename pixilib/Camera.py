@@ -28,8 +28,6 @@ class GridCamera:
         self.height: int = real_height  # Screen height
 
         # Camera Viewport
-        self.viewport_x: int = 0
-        self.viewport_y: int = 0
         self.scale: float = scale
 
     def set_position(self, x: float, y: float):
@@ -81,8 +79,8 @@ class GridCamera:
         screen.blit(
             surface_scaled,
             (
-                int(self.real_x - self.viewport_x * self.scale),
-                int(self.real_y - self.viewport_y * self.scale),
+                int(self.real_x),
+                int(self.real_y),
             ),
         )
 
@@ -185,3 +183,19 @@ class GridCamera:
             pygame.draw.line(surface, color, (x, 0), (x, self.height * self.scale))
         for y in vertical_grid_lines[: self.grid.height + 1]:
             pygame.draw.line(surface, color, (0, y), (self.width * self.scale, y))
+
+    def zoom_on(self, origin: tuple[float, float], scale: float):
+        # Get offset
+        dx = origin[0] - self.real_x
+        dy = origin[1] - self.real_y
+
+        # Get ratio of new scale to old scale
+        scale_ratio = scale / self.scale
+
+        # Adjust camera pos so origin stays fixed
+        new_real_x = origin[0] - dx * scale_ratio
+        new_real_y = origin[1] - dy * scale_ratio
+
+        # Apply scale and pos
+        self.set_scale(scale)
+        self.set_position(new_real_x, new_real_y)
