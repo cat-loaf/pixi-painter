@@ -104,6 +104,7 @@ def main():
 
         # calculate grid increment based on camera scale grid size
         grid_incr = (camera.width // grid.width) * camera.scale
+        debug_text["Grid Increment"] = grid_incr
         canvas_mouse_x = mouse_pos[0] - camera.real_x
         canvas_mouse_y = mouse_pos[1] - camera.real_y
 
@@ -479,6 +480,10 @@ def main():
                 ),
                 special_flags=pygame.BLEND_SUB,
             )
+            
+        # draw palette    
+            
+            
 
         drawDebugView(font, screen, (255, 255, 255), debug_text)
 

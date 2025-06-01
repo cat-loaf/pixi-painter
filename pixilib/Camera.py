@@ -120,6 +120,28 @@ class GridCamera:
                 )
                 pixel_array[x, y] = color
 
+    def zoom_on(self, origin: tuple[float, float], scale: float):
+        """Zoom the camera on a fixed point
+
+        Args:
+            origin (tuple[float, float]): The fixed point to zoom in on
+            scale (float): The new scale factor
+        """
+        # Get offset
+        dx = origin[0] - self.real_x
+        dy = origin[1] - self.real_y
+
+        # Get ratio of new scale to old scale
+        scale_ratio = scale / self.scale
+
+        # Adjust camera pos so origin stays fixed
+        new_real_x = origin[0] - dx * scale_ratio
+        new_real_y = origin[1] - dy * scale_ratio
+
+        # Apply scale and pos
+        self.set_scale(scale)
+        self.set_position(new_real_x, new_real_y)
+
     def _generate_surface(
         self, surface: Surface, background: RGB, backgrounds: list[RGB] = None
     ):
@@ -170,32 +192,17 @@ class GridCamera:
             surface (Surface): The Pygame surface to draw the grid lines on
             color (RGB): The color of the grid lines
         """
-        grid_increment_x = (self.width // self.grid.width) * self.scale
-        grid_increment_y = (self.height // self.grid.height) * self.scale
+        if self.scale < 0.91:
+            return
 
-        horizontal_grid_lines = [
-            x * grid_increment_x for x in range(self.grid.width + 1)
-        ]
-        vertical_grid_lines = [
-            y * grid_increment_y for y in range(self.grid.height + 1)
-        ]
+        grid_incr = (self.width // self.grid.width) * self.scale
+
+        if grid_incr < 5.0:
+            return
+
+        horizontal_grid_lines = [x * grid_incr for x in range(self.grid.width + 1)]
+        vertical_grid_lines = [y * grid_incr for y in range(self.grid.height + 1)]
         for x in horizontal_grid_lines[: self.grid.width + 1]:
             pygame.draw.line(surface, color, (x, 0), (x, self.height * self.scale))
         for y in vertical_grid_lines[: self.grid.height + 1]:
             pygame.draw.line(surface, color, (0, y), (self.width * self.scale, y))
-
-    def zoom_on(self, origin: tuple[float, float], scale: float):
-        # Get offset
-        dx = origin[0] - self.real_x
-        dy = origin[1] - self.real_y
-
-        # Get ratio of new scale to old scale
-        scale_ratio = scale / self.scale
-
-        # Adjust camera pos so origin stays fixed
-        new_real_x = origin[0] - dx * scale_ratio
-        new_real_y = origin[1] - dy * scale_ratio
-
-        # Apply scale and pos
-        self.set_scale(scale)
-        self.set_position(new_real_x, new_real_y)
