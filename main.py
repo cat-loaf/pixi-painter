@@ -7,10 +7,12 @@ import pixilib.Camera as Camera
 from pixilib.Grid import ComputedLayeredGrid, Grid
 from pixilib.DebugView import drawDebugView
 from pixilib.Tools import *
-from pixilib.Helpers import clamp, overflow, on_screen, in_grid
+from pixilib.Helpers import clamp, overflow, on_screen, in_grid, coords_in
+from pixilib.Color import ColorSelector
+from pixilib.Types import HUE_MAX, SATURATION_MAX
 
 
-def main():
+def main(debug=False):
     # Initialize Pygame
     pygame.init()
 
@@ -49,6 +51,38 @@ def main():
     )
     cam_surface = pygame.Surface((grid.width, grid.height))
 
+    color_selector = ColorSelector(
+        x=16, y=16, size=[160, 160], hue_picker_height=20, hue_picker_padding=5
+    )
+    hue_slots = 20
+    hue_indicator = pygame.Surface(
+        (color_selector.size[0] / hue_slots, color_selector.hue_picker_height),
+        pygame.SRCALPHA,
+    )
+    sat_value_circle_percent = 0.1
+    sat_val_indicator = pygame.Surface(
+        (
+            color_selector.size[0] * sat_value_circle_percent,
+            color_selector.size[1] * sat_value_circle_percent,
+        ),
+        pygame.SRCALPHA,
+    )
+
+    pygame.draw.rect(
+        hue_indicator,
+        (0, 0, 0, 127),
+        (0, 0, hue_indicator.get_width(), hue_indicator.get_height()),
+        2,
+    )
+
+    pygame.draw.circle(
+        sat_val_indicator,
+        (0, 0, 0, 127),
+        (sat_val_indicator.get_width() / 2, sat_val_indicator.get_height() / 2),
+        sat_val_indicator.get_width() / 2,
+        3,
+    )
+
     # Main loop
     running = True
 
@@ -57,13 +91,7 @@ def main():
     toolset: list[Tool] = mouse_held_tools + mouse_up_tools + mouse_pressed_tools
     selected_tool: int = 0
 
-    tool_color: list[RGBA] = [
-        (255, 0, 0, 255),
-        (0, 255, 0, 255),
-        (0, 0, 255, 255),
-        (0, 0, 0, 255),
-    ]
-    selected_color: int = 0
+    tool_color: RGBA = (0, 0, 0, 0)
 
     tool_sizes: list[int] = [0 for _ in range(len(toolset))]
 
@@ -79,7 +107,7 @@ def main():
     debug_text: Dict[str:any] = {
         "Δt": lambda: dt,
         "Tool": lambda: toolset[selected_tool],
-        "Color": lambda: tool_color[selected_color],
+        "Color": lambda: tool_color,
         "Tool Size": lambda: tool_sizes[selected_tool],
         "Brush Type": lambda: tool_brush_types[selected_brush].name,
         "Mouse Position": (0, 0),
@@ -118,6 +146,8 @@ def main():
         for event in events:
             if event.type == VIDEORESIZE:
                 screen_size = (event.w, event.h)
+                color_size = max(min([screen_size[0] // 5, screen_size[1] // 5]), 100)
+                color_selector.set_size(color_size, color_size)
 
             if event.type == QUIT:
                 running = False
@@ -131,15 +161,6 @@ def main():
                     selected_tool = overflow(selected_tool + 1, 0, len(toolset) - 1)
                 if event.key == K_LEFT:
                     selected_tool = overflow(selected_tool - 1, 0, len(toolset) - 1)
-
-                if event.key == K_UP:
-                    selected_color = overflow(
-                        selected_color + 1, 0, len(tool_color) - 1
-                    )
-                if event.key == K_DOWN:
-                    selected_color = overflow(
-                        selected_color - 1, 0, len(tool_color) - 1
-                    )
 
                 if event.key == K_KP_PLUS:
                     tool_sizes[selected_tool] = clamp(
@@ -175,7 +196,7 @@ def main():
                                 x=grid_x,
                                 y=grid_y,
                                 grid=grid,
-                                color=tool_color[selected_color],
+                                color=tool_color,
                                 radius=tool_sizes[selected_tool],
                                 radius_type=tool_brush_types[selected_brush],
                                 data=data,
@@ -194,7 +215,7 @@ def main():
                                 x2=grid_x,
                                 y2=grid_y,
                                 grid=grid,
-                                color=tool_color[selected_color],
+                                color=tool_color,
                                 radius=tool_sizes[selected_tool],
                                 radius_type=tool_brush_types[selected_brush],
                                 data=data,
@@ -208,7 +229,7 @@ def main():
                                     x2=grid_x,
                                     y2=grid_y,
                                     grid=grid,
-                                    color=tool_color[selected_color],
+                                    color=tool_color,
                                     radius=tool_sizes[selected_tool],
                                     radius_type=tool_brush_types[selected_brush],
                                     data=data,
@@ -237,42 +258,45 @@ def main():
 
         # Left mouse
         if mouse_held[0]:
-            if on_screen(
-                *mouse_pos, screen.get_width(), screen.get_height()
-            ) and in_grid(grid_x, grid_y, grid.width, grid.height):
-                if toolset[selected_tool] in mouse_held_tools:
-                    toolset[selected_tool].run(
-                        x=grid_x,
-                        y=grid_y,
+            tool_color, clicked = color_selector.click(*mouse_pos)
+            if not clicked:
+
+                if on_screen(
+                    *mouse_pos, screen.get_width(), screen.get_height()
+                ) and in_grid(grid_x, grid_y, grid.width, grid.height):
+                    if toolset[selected_tool] in mouse_held_tools:
+                        toolset[selected_tool].run(
+                            x=grid_x,
+                            y=grid_y,
+                            x2=grid_x,
+                            y2=grid_y,
+                            grid=grid,
+                            color=tool_color,
+                            radius=tool_sizes[selected_tool],
+                            radius_type=tool_brush_types[selected_brush],
+                            data=data,
+                            mouse_held=True,
+                        )
+
+                # Overlay for line tool (only active when mouse held)
+                if toolset[selected_tool] == LineTool:
+                    LineTool.run(
+                        grid=overlay_grid,
+                        x=click_origin[0],
+                        y=click_origin[1],
                         x2=grid_x,
                         y2=grid_y,
-                        grid=grid,
-                        color=tool_color[selected_color],
+                        color=(
+                            tool_color[0],
+                            tool_color[1],
+                            tool_color[2],
+                            overlay_transparency,
+                        ),
                         radius=tool_sizes[selected_tool],
                         radius_type=tool_brush_types[selected_brush],
                         data=data,
-                        mouse_held=True,
+                        mouse_held=mouse_held[0],
                     )
-
-            # Overlay for line tool (only active when mouse held)
-            if toolset[selected_tool] == LineTool:
-                LineTool.run(
-                    grid=overlay_grid,
-                    x=click_origin[0],
-                    y=click_origin[1],
-                    x2=grid_x,
-                    y2=grid_y,
-                    color=(
-                        tool_color[selected_color][0],
-                        tool_color[selected_color][1],
-                        tool_color[selected_color][2],
-                        overlay_transparency,
-                    ),
-                    radius=tool_sizes[selected_tool],
-                    radius_type=tool_brush_types[selected_brush],
-                    data=data,
-                    mouse_held=mouse_held[0],
-                )
 
         # Middle mouse
         if mouse_held[1]:
@@ -305,9 +329,9 @@ def main():
                 y2=grid_y,
                 grid=overlay_grid,
                 color=(
-                    tool_color[selected_color][0],
-                    tool_color[selected_color][1],
-                    tool_color[selected_color][2],
+                    tool_color[0],
+                    tool_color[1],
+                    tool_color[2],
                     overlay_transparency,
                 ),
                 radius=(tool_sizes[selected_tool]),
@@ -329,9 +353,9 @@ def main():
                     y=grid_y,
                     grid=overlay_grid,
                     color=(
-                        tool_color[selected_color][0],
-                        tool_color[selected_color][1],
-                        tool_color[selected_color][2],
+                        tool_color[0],
+                        tool_color[1],
+                        tool_color[2],
                         overlay_transparency,
                     ),
                     radius=(
@@ -360,10 +384,8 @@ def main():
             data["y"] = grid_y
 
         # Draw grid cursor
-        if (
-            camera.scale >= 0.91
-            and toolset[selected_tool] not in no_cursor_grid_preview
-            and in_grid(grid_x, grid_y, grid.width, grid.height)
+        if toolset[selected_tool] not in no_cursor_grid_preview and in_grid(
+            grid_x, grid_y, grid.width, grid.height
         ):
             grid_cursor.fill((0, 0, 0, 0))  # Clear the grid cursor
             match tool_brush_types[selected_brush]:
@@ -480,12 +502,34 @@ def main():
                 ),
                 special_flags=pygame.BLEND_SUB,
             )
-            
-        # draw palette    
-            
-            
 
-        drawDebugView(font, screen, (255, 255, 255), debug_text)
+        # draw palette
+        color_selector.draw(screen)
+        screen.blit(
+            hue_indicator,
+            (
+                color_selector.x
+                + round((color_selector.hue / HUE_MAX) * color_selector.size[0]),
+                color_selector.y
+                + color_selector.size[1]
+                + color_selector.hue_picker_padding,
+            ),
+        )
+        screen.blit(
+            sat_val_indicator,
+            (
+                color_selector.x
+                + (color_selector.sat / SATURATION_MAX) * color_selector.size[0]
+                - (sat_val_indicator.get_width() / 2),
+                color_selector.y
+                + ((SATURATION_MAX - color_selector.val) / SATURATION_MAX)
+                * color_selector.size[1]
+                - (sat_val_indicator.get_height() / 2),
+            ),
+        )
+
+        if debug:
+            drawDebugView(font, screen, (255, 255, 255), debug_text)
 
         # Update display
         pygame.display.flip()
@@ -499,10 +543,11 @@ def main():
 # If the script is run with the argument "profile", use cProfile to profile the main function
 from sys import argv
 
-if len(argv) > 1 and argv[1] == "profile":
+if "debug" in argv:
+    main(debug=True)
+elif "profile" in argv:
     import cProfile as profile
 
     profile.run("main()")
-
 else:
     main()
