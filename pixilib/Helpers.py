@@ -1,7 +1,7 @@
 from numbers import Number
 from typing import Iterable
 import numpy as np
-from .Types import RGB, RGBA
+from .Types import RGB, RGBA, HSV
 from collections import deque
 
 
@@ -114,6 +114,40 @@ def rgb_to_hex(rgb: RGB | RGBA) -> str:
     return "#{:02x}{:02x}{:02x}".format(rgb[0], rgb[1], rgb[2])
 
 
+def hsva_to_rgba(hsv: HSV, a: int) -> RGBA:
+    """Convert an HSV color to RGBA
+
+    Args:
+        hsv (HSV): Color in HSV (Hue:0-360, Saturation:0-100, Value:0-100)
+        a (int): Alpha value (0-255)
+
+    Returns:
+        RGBA: Color in RGBA format
+    """
+    h, s, v = hsv
+    s /= 100.0
+    v /= 100.0
+
+    c = v * s
+    x = c * (1 - abs((h / 60) % 2 - 1))
+    m = v - c
+
+    if 0 <= h < 60:
+        r, g, b = c, x, 0
+    elif 60 <= h < 120:
+        r, g, b = x, c, 0
+    elif 120 <= h < 180:
+        r, g, b = 0, c, x
+    elif 180 <= h < 240:
+        r, g, b = 0, x, c
+    elif 240 <= h < 300:
+        r, g, b = x, 0, c
+    else:  # 300 <= h < 360
+        r, g, b = c, 0, x
+
+    return (round((r + m) * 255), round((g + m) * 255), round((b + m) * 255), a)
+
+
 def color_diff(c1: RGBA, c2: RGBA) -> float:
     """Euclidean distance between two RGBA colors
     Args:
@@ -126,6 +160,20 @@ def color_diff(c1: RGBA, c2: RGBA) -> float:
         + (c1[2] - c2[2]) ** 2
         + (c1[3] - c2[3]) ** 2
     )
+    
+def coords_in(inside: tuple[int, int], bounds: tuple[int, int, int, int]) -> bool:
+    """Check if coordinates are within the bounds of a rectangle
+
+    Args:
+        inside (tuple[int, int]): Coordinates to check (x, y)
+        bounds (tuple[int, int, int, int]): Bounds of the rectangle (x, y, width, height)
+
+    Returns:
+        bool: True if coordinates are within bounds, False otherwise
+    """
+    x, y = inside
+    bx, by, bw, bh = bounds
+    return bx <= x < bx + bw and by <= y < by + bh
 
 
 def in_grid(x: int, y: int, width: int, height: int) -> bool:
