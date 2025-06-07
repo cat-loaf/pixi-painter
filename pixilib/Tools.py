@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from .Grid import Grid
 from .Types import RGBA, BrushTypes
-from .Helpers import flood_fill, line, chunks
+from .Color import ColorSelector
+from .Helpers import flood_fill, line, chunks, rgba_to_hsva
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 
@@ -34,7 +35,7 @@ class PaintTool(Tool):
     """Tool for painting"""
 
     def __str__():
-        return "Paint Tool"
+        return "paintbrush"
 
     def run(
         grid: Grid,
@@ -116,7 +117,7 @@ class EraserTool(Tool):
     """Tool for erasing"""
 
     def __str__():
-        return "Eraser Tool"
+        return "eraser"
 
     def run(
         grid: Grid,
@@ -160,7 +161,7 @@ class FillTool(Tool):
     """Tool for filling an area with a color"""
 
     def __str__():
-        return "Fill Tool"
+        return "fill"
 
     def run(
         grid: Grid,
@@ -181,7 +182,7 @@ class LineTool(Tool):
     """Tool for drawing lines"""
 
     def __str__():
-        return "Line Tool"
+        return "line"
 
     def run(
         grid: Grid,
@@ -239,10 +240,83 @@ class LineTool(Tool):
         data["y"] = None
 
 
+class ClearTool(Tool):
+    """Tool for clearing the grid"""
+
+    def __str__():
+        return "clear"
+
+    def run(grid: Grid, color: RGBA, *args, **kwargs):
+        """Clears the grid by filling it with the specified color.
+
+        Args:
+            grid (Grid): The grid to clear.
+            color (RGBA): The color to fill the grid with.
+        """
+        grid.clear(color)
+
+
+class PanTool(Tool):
+    """Tool for panning the view"""
+
+    def __str__():
+        return "pan"
+
+    def run(*args, **kwargs):
+        """Panning does not require any specific action."""
+        pass
+
+
+class EyedropperTool(Tool):
+    def __str__():
+        return "eyedropper"
+
+    def run(
+        grid: Grid,
+        x: int,
+        y: int,
+        color_selector: ColorSelector,
+        layer: int = None,
+        *args,
+        **kwargs,
+    ):
+        """Picks the color at the specified coordinates.
+
+        Args:
+            grid (Grid): The grid to pick from.
+            x (int): X coordinate to pick from.
+            y (int): Y coordinate to pick from.
+        """
+        cell = (0, 0, 0, 0)
+        if 0 <= x < grid.width and 0 <= y < grid.height:
+            if layer is not None:
+                cell = grid[x, y, layer].value
+            else:
+                cell = grid[x, y].value
+
+        hsva = rgba_to_hsva(cell)
+        color_selector.update_hue(hsva[0])
+        color_selector.sat = hsva[1]
+        color_selector.val = hsva[2]
+        color_selector.color = cell
+
+
 mouse_held_tools = [PaintTool, EraserTool]
 mouse_up_tools = [LineTool]
-mouse_pressed_tools = [FillTool]
+mouse_pressed_tools = [FillTool, ClearTool, EyedropperTool]
 
 
-mouse_preview_tools = [PaintTool, LineTool, FillTool]
+mouse_preview_tools = [PaintTool, LineTool, FillTool, ClearTool]
 no_cursor_grid_preview = [LineTool]
+
+toolset: list[Tool] = [
+    PaintTool,
+    EraserTool,
+    LineTool,
+    FillTool,
+    ClearTool,
+    PanTool,
+    EyedropperTool,
+]
+
+toolset_indexes = [a.__str__() for a in toolset]

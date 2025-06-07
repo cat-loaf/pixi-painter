@@ -5,11 +5,13 @@ from pygame.locals import *
 from pygame.font import Font
 import pixilib.Camera as Camera
 from pixilib.Grid import ComputedLayeredGrid, Grid
-from pixilib.DebugView import drawDebugView
+from pixilib.DebugView import drawDebugView, drawDebugUIs
 from pixilib.Tools import *
 from pixilib.Helpers import clamp, overflow, on_screen, in_grid, coords_in
 from pixilib.Color import ColorSelector
 from pixilib.Types import HUE_MAX, SATURATION_MAX
+from pixilib.Images import ToolAssets
+from pixilib.UI import draw_ui_rects, draw_tool_icons, select_tool
 
 
 def main(debug=False):
@@ -17,7 +19,7 @@ def main(debug=False):
     pygame.init()
 
     # Create a window
-    screen_size = (800, 800)
+    screen_size = (1000, 800)
     screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE)
 
     clock = pygame.time.Clock()
@@ -52,8 +54,10 @@ def main(debug=False):
     cam_surface = pygame.Surface((grid.width, grid.height))
 
     color_selector = ColorSelector(
-        x=16, y=16, size=[160, 160], hue_picker_height=20, hue_picker_padding=5
+        x=15, y=15, size=[160, 160], hue_picker_height=20, hue_picker_padding=5
     )
+    color_selector.click(color_selector.x + 158, color_selector.y + 1)
+
     hue_slots = 20
     hue_indicator = pygame.Surface(
         (color_selector.size[0] / hue_slots, color_selector.hue_picker_height),
@@ -83,15 +87,23 @@ def main(debug=False):
         3,
     )
 
+    tool_assets = ToolAssets()
+
     # Main loop
     running = True
 
     font: Font = Font(None, 24)
 
-    toolset: list[Tool] = mouse_held_tools + mouse_up_tools + mouse_pressed_tools
+    # toolset: list[Tool] = (
+    #     mouse_held_tools
+    #     + mouse_up_tools
+    #     + mouse_pressed_tools
+    #     + mouse_preview_tools
+    #     + mouse_other_tools
+    # )
     selected_tool: int = 0
 
-    tool_color: RGBA = (0, 0, 0, 0)
+    tool_color: RGBA = (255, 0, 0, 255)
 
     tool_sizes: list[int] = [0 for _ in range(len(toolset))]
 
@@ -123,6 +135,27 @@ def main(debug=False):
 
     grid_cursor = pygame.Surface((17, 17), pygame.SRCALPHA)
 
+    # (0, 0, 15 + color_selector_width + 15, screen_height, 0, 2),
+    # (screen_width - op - ics - ip - ics - op, 0, screen_width, screen_height, 0, 2),
+
+    op = 20
+    ip = 10
+    ics = 32
+
+    ui_locations = [
+        (0, 0, 15 + color_selector.size[0] + 15, screen_size[1], 0, 2),
+        (
+            screen_size[0] - op - ics - ip - ics - op,
+            0,
+            screen_size[0],
+            screen_size[1],
+            0,
+            2,
+        ),
+    ]
+
+    draw_grid_overlay: bool = True
+
     while running:
         dt = clock.tick(60)
 
@@ -142,6 +175,21 @@ def main(debug=False):
         debug_text["Grid Pos"] = (grid_x, grid_y)
 
         events = pygame.event.get()
+
+        tool_color = color_selector.color
+
+        # Handle UI Clicks
+        ui_clicked = False
+        if mouse_held[0]:
+            ts = select_tool(mouse_pos[0], mouse_pos[1], screen_size[0], screen_size[1])
+            if ts is not None:
+                selected_tool = toolset_indexes.index(ts)
+
+            for x, y, w, h, _, _ in ui_locations:
+                if coords_in(mouse_pos, (x, y, w, h)):
+                    ui_clicked = True
+        debug_text["UI Clicked"] = ui_clicked
+
         # debug_text["events"] = events
         for event in events:
             if event.type == VIDEORESIZE:
@@ -156,11 +204,6 @@ def main(debug=False):
                 debug_text["Key Pressed"] = (
                     chr(event.key) if event.key < 0x10FFFF else event.key
                 )
-
-                if event.key == K_RIGHT:
-                    selected_tool = overflow(selected_tool + 1, 0, len(toolset) - 1)
-                if event.key == K_LEFT:
-                    selected_tool = overflow(selected_tool - 1, 0, len(toolset) - 1)
 
                 if event.key == K_KP_PLUS:
                     tool_sizes[selected_tool] = clamp(
@@ -179,6 +222,10 @@ def main(debug=False):
                     selected_brush = overflow(
                         selected_brush - 1, 0, len(tool_brush_types) - 1
                     )
+
+                if event.key == K_g:
+                    draw_grid_overlay = not draw_grid_overlay
+                    debug_text["Draw Grid Overlay"] = draw_grid_overlay
 
             if event.type == MOUSEBUTTONDOWN:
                 debug_text["Mouse Pressed"] = event.button
@@ -201,6 +248,7 @@ def main(debug=False):
                                 radius_type=tool_brush_types[selected_brush],
                                 data=data,
                                 mouse_held=mouse_held[0],
+                                color_selector=color_selector,
                             )
 
             if event.type == MOUSEBUTTONUP:
@@ -257,10 +305,9 @@ def main(debug=False):
         )
 
         # Left mouse
-        if mouse_held[0]:
+        if mouse_held[0] and not (keys_held[K_SPACE]):
             tool_color, clicked = color_selector.click(*mouse_pos)
-            if not clicked:
-
+            if not ui_clicked and not clicked:
                 if on_screen(
                     *mouse_pos, screen.get_width(), screen.get_height()
                 ) and in_grid(grid_x, grid_y, grid.width, grid.height):
@@ -298,8 +345,12 @@ def main(debug=False):
                         mouse_held=mouse_held[0],
                     )
 
-        # Middle mouse
-        if mouse_held[1]:
+        # Panning functionality
+        if (
+            mouse_held[1]
+            or (toolset[selected_tool] == PanTool and mouse_held[0])
+            or (keys_held[K_SPACE] and mouse_held[0])
+        ):
             # Pan the camera
             dx = mouse_pos[0] - pan_origin[0]
             dy = mouse_pos[1] - pan_origin[1]
@@ -348,6 +399,7 @@ def main(debug=False):
                 #     tool_color[selected_color][2],
                 #     overlay_transparency,
                 # )
+
                 PaintTool.run(
                     x=grid_x,
                     y=grid_y,
@@ -373,7 +425,9 @@ def main(debug=False):
         # Clear the screen
         screen.fill((31, 31, 31))
 
-        camera.draw(screen, cam_surface, (255, 255, 255))
+        camera.draw(
+            screen, cam_surface, (255, 255, 255), draw_gridlines=draw_grid_overlay
+        )
 
         # Update tool data
         for tool in toolset:
@@ -387,6 +441,11 @@ def main(debug=False):
         if toolset[selected_tool] not in no_cursor_grid_preview and in_grid(
             grid_x, grid_y, grid.width, grid.height
         ):
+            # recalc grid_x and grid_y in case camera move or zoom
+            tmp_grid_x = grid_x
+            tmp_grid_y = grid_y
+            grid_x = int((mouse_pos[0] - camera.real_x) // grid_incr)
+            grid_y = int((mouse_pos[1] - camera.real_y) // grid_incr)
             grid_cursor.fill((0, 0, 0, 0))  # Clear the grid cursor
             match tool_brush_types[selected_brush]:
                 case BrushTypes.SQUARE:
@@ -503,6 +562,23 @@ def main(debug=False):
                 special_flags=pygame.BLEND_SUB,
             )
 
+            grid_x = tmp_grid_x
+            grid_y = tmp_grid_y
+
+        if debug:
+            drawDebugUIs(
+                screen, ui_locations, color=(24, 24, 24), border_color=(43, 43, 43)
+            )
+
+        draw_ui_rects(screen, ui_locations)
+        draw_tool_icons(
+            tool_assets,
+            screen,
+            screen_size[0],
+            screen_size[1],
+            (toolset[selected_tool].__str__()),
+        )
+
         # draw palette
         color_selector.draw(screen)
         screen.blit(
@@ -551,3 +627,6 @@ elif "profile" in argv:
     profile.run("main()")
 else:
     main()
+    # from pixilib.Images import get_images
+
+    # get_images()

@@ -207,6 +207,12 @@ class ColorSelector:
 
         del pixel_array  # Unlock the surface
 
+        self.color = hsva_to_rgba((hue, self.sat, self.val), 255)
+        try:
+            self.update_color_display()
+        except:
+            pass
+
     def update_color_display(self):
         self.color_display: Surface = Surface((self.size[0], self.hue_picker_height))
         self.color_display.fill(self.color)
@@ -303,3 +309,4 @@ class ColorSelector:
             func(self.color)
 
         return self.color, True
+    

@@ -49,7 +49,13 @@ class GridCamera:
         # set scale up to two decimal places
         self.scale = round(scale, 2)
 
-    def draw(self, screen: Surface, surface: Surface, background: RGB):
+    def draw(
+        self,
+        screen: Surface,
+        surface: Surface,
+        background: RGB,
+        draw_gridlines: bool = True,
+    ):
         """Draw the grid onto the surface, scaling it to fit the camera dimensions
 
         Args:
@@ -73,7 +79,7 @@ class GridCamera:
 
         if self.scale >= 0.91:
             self._draw_gridlines(
-                surface_scaled, (0, 0, 0)
+                surface_scaled, (0, 0, 0), draw_gridlines
             )  # Draw grid lines on the surface
 
         screen.blit(
@@ -185,13 +191,16 @@ class GridCamera:
             surface, (width * self.scale, height * self.scale)
         )
 
-    def _draw_gridlines(self, surface: Surface, color: RGB):
+    def _draw_gridlines(self, surface: Surface, color: RGB, draw: bool = True):
         """Internal Method, Draw grid lines on the surface
 
         Args:
             surface (Surface): The Pygame surface to draw the grid lines on
             color (RGB): The color of the grid lines
         """
+        if not draw:
+            return
+
         if self.scale < 0.91:
             return
 

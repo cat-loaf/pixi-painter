@@ -1,4 +1,3 @@
-from typing import Any
 from .Cell import Cell
 from .Helpers import stack_rgba
 from .Types import RGBA
@@ -7,7 +6,9 @@ from .Types import RGBA
 class Grid:
     """Grid class for managing a grid of cells with RGBA values"""
 
-    def __init__(self, width: int, height: int, default_value: RGBA = (0, 0, 0, 0)):
+    def __init__(
+        self, width: int, height: int, default_value: RGBA = (255, 255, 255, 0)
+    ):
         self.width = width
         self.height = height
         self.cells = [

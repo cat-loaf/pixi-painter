@@ -148,6 +148,39 @@ def hsva_to_rgba(hsv: HSV, a: int) -> RGBA:
     return (round((r + m) * 255), round((g + m) * 255), round((b + m) * 255), a)
 
 
+def rgba_to_hsva(rgba: RGBA) -> HSV:
+    """Convert an RGBA color to HSV
+
+    Args:
+        rgba (RGBA): Color in RGBA format
+
+    Returns:
+        HSV: Color in HSV format (Hue:0-360, Saturation:0-100, Value:0-100)
+    """
+    r, g, b, a = rgba
+    r /= 255.0
+    g /= 255.0
+    b /= 255.0
+
+    mx = max(r, g, b)
+    mn = min(r, g, b)
+    diff = mx - mn
+
+    if diff == 0:
+        h = 0
+    elif mx == r:
+        h = (60 * ((g - b) / diff) + 360) % 360
+    elif mx == g:
+        h = (60 * ((b - r) / diff) + 120) % 360
+    else:  # mx == b
+        h = (60 * ((r - g) / diff) + 240) % 360
+
+    s = 0 if mx == 0 else (diff / mx) * 100
+    v = mx * 100
+
+    return (int(h), int(s), int(v))
+
+
 def color_diff(c1: RGBA, c2: RGBA) -> float:
     """Euclidean distance between two RGBA colors
     Args:
@@ -160,7 +193,8 @@ def color_diff(c1: RGBA, c2: RGBA) -> float:
         + (c1[2] - c2[2]) ** 2
         + (c1[3] - c2[3]) ** 2
     )
-    
+
+
 def coords_in(inside: tuple[int, int], bounds: tuple[int, int, int, int]) -> bool:
     """Check if coordinates are within the bounds of a rectangle
 
