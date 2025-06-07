@@ -113,6 +113,69 @@ class ToolAssets:
             raise ValueError(f"Tool '{tool_name}' not found.")
 
 
+class CursorAssets:
+    def __init__(self):
+        project_root = path.abspath(".")
+        cursor_image_path = path.join(project_root, "Assets", "icons", "cursor")
+
+        self.paint_cursor = image.load(
+            path.join(cursor_image_path, "paint_cursor.png")
+        ).convert_alpha()
+
+        self.eraser_cursor = image.load(
+            path.join(cursor_image_path, "eraser_cursor.png")
+        ).convert_alpha()
+
+        self.line_cursor = image.load(
+            path.join(cursor_image_path, "line_cursor.png")
+        ).convert_alpha()
+
+        self.fill_cursor = image.load(
+            path.join(cursor_image_path, "fill_cursor.png")
+        ).convert_alpha()
+
+        self.clear_cursor = image.load(
+            path.join(cursor_image_path, "clear_cursor.png")
+        ).convert_alpha()
+
+        self.move_cursor = image.load(
+            path.join(cursor_image_path, "move_cursor.png")
+        ).convert_alpha()
+
+        self.eyedropper_cursor = image.load(
+            path.join(cursor_image_path, "eyedropper_cursor.png")
+        ).convert_alpha()
+
+    def select_tool(self, tool_name: str):
+        tool = {
+            "paintbrush": self.paint_cursor,
+            "eraser": self.eraser_cursor,
+            "line": self.line_cursor,
+            "fill": self.fill_cursor,
+            "clear": self.clear_cursor,
+            "pan": self.move_cursor,
+            "eyedropper": self.eyedropper_cursor,
+        }
+
+        tool_image_offset = {
+            "paintbrush": (4, 4),
+            "eraser": (4, 4),
+            "line": (4, 4),
+            "fill": (8, 24),
+            "clear": (16, 16),
+            "pan": (16, 16),
+            "eyedropper": (8, 24),
+        }
+
+        if tool_name in tool:
+            for t in tool.values():
+                if isinstance(t, ToggledImage):
+                    t.set_state(False)
+            return tool[tool_name], tool_image_offset[tool_name]
+        else:
+            return None, (0, 0)
+
+
 class ToggledImage:
     def __init__(self, normal_image: image, clicked_image: image):
         self.normal_image = normal_image

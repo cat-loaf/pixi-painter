@@ -299,6 +299,7 @@ class EyedropperTool(Tool):
         color_selector.sat = hsva[1]
         color_selector.val = hsva[2]
         color_selector.color = cell
+        color_selector.update_color_display()
 
 
 mouse_held_tools = [PaintTool, EraserTool]

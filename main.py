@@ -10,7 +10,7 @@ from pixilib.Tools import *
 from pixilib.Helpers import clamp, overflow, on_screen, in_grid, coords_in
 from pixilib.Color import ColorSelector
 from pixilib.Types import HUE_MAX, SATURATION_MAX
-from pixilib.Images import ToolAssets
+from pixilib.Images import ToolAssets, CursorAssets
 from pixilib.UI import draw_ui_rects, draw_tool_icons, select_tool
 
 
@@ -23,6 +23,11 @@ def main(debug=False):
     screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE)
 
     clock = pygame.time.Clock()
+
+    pygame.mouse.set_visible(False)
+    cursor_assets = CursorAssets()
+    cursor_image: pygame.Surface = cursor_assets.paint_cursor
+    cursor_offset: tuple[int, int] = (0, 0)
 
     canvas_size = (64, 64)
 
@@ -177,6 +182,9 @@ def main(debug=False):
         events = pygame.event.get()
 
         tool_color = color_selector.color
+        cursor_image, cursor_offset = cursor_assets.select_tool(
+            toolset[selected_tool].__str__()
+        )
 
         # Handle UI Clicks
         ui_clicked = False
@@ -196,6 +204,17 @@ def main(debug=False):
                 screen_size = (event.w, event.h)
                 color_size = max(min([screen_size[0] // 5, screen_size[1] // 5]), 100)
                 color_selector.set_size(color_size, color_size)
+                ui_locations = [
+                    (0, 0, 15 + color_selector.size[0] + 15, screen_size[1], 0, 2),
+                    (
+                        screen_size[0] - op - ics - ip - ics - op,
+                        0,
+                        screen_size[0],
+                        screen_size[1],
+                        0,
+                        2,
+                    ),
+                ]
 
             if event.type == QUIT:
                 running = False
@@ -237,7 +256,12 @@ def main(debug=False):
                 if event.button == 1:
                     click_origin = (grid_x, grid_y)
                     debug_text["Click Origin"] = click_origin
-                    if toolset[selected_tool] in mouse_pressed_tools:
+
+                    for x, y, w, h, _, _ in ui_locations:
+                        if coords_in(mouse_pos, (x, y, w, h)):
+                            ui_clicked = True
+
+                    if toolset[selected_tool] in mouse_pressed_tools and not ui_clicked:
                         if in_grid(grid_x, grid_y, grid.width, grid.height):
                             toolset[selected_tool].run(
                                 x=grid_x,
@@ -350,7 +374,7 @@ def main(debug=False):
             mouse_held[1]
             or (toolset[selected_tool] == PanTool and mouse_held[0])
             or (keys_held[K_SPACE] and mouse_held[0])
-        ):
+        ) and (not ui_clicked):
             # Pan the camera
             dx = mouse_pos[0] - pan_origin[0]
             dy = mouse_pos[1] - pan_origin[1]
@@ -606,6 +630,15 @@ def main(debug=False):
 
         if debug:
             drawDebugView(font, screen, (255, 255, 255), debug_text)
+
+        if cursor_image is not None:
+            screen.blit(
+                cursor_image,
+                (
+                    mouse_pos[0] - cursor_offset[0],
+                    mouse_pos[1] - cursor_offset[1],
+                ),
+            )
 
         # Update display
         pygame.display.flip()
