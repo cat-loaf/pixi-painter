@@ -21,17 +21,3 @@ def drawDebugView(font: Font, screen: Surface, color: RGB, texts: dict):
             screen.get_height() - 10 - list(reversed(texts.keys())).index(label) * 20,
         )
         screen.blit(text_surface, text_rect)
-
-
-def drawDebugUIs(
-    screen: Surface,
-    ui_locations: list,
-    color: RGB = (255, 0, 0),
-    border_color: RGB = (0, 0, 0),
-):
-    for uiloc in ui_locations:
-        if uiloc is None:
-            continue
-        x, y, w, h = uiloc
-        draw.rect(screen, color, (x, y, w, h))
-        draw.rect(screen, border_color, (x, y, w, h), 2)

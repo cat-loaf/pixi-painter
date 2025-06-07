@@ -5,7 +5,7 @@ from pygame.locals import *
 from pygame.font import Font
 import pixilib.Camera as Camera
 from pixilib.Grid import ComputedLayeredGrid, Grid
-from pixilib.DebugView import drawDebugView, drawDebugUIs
+from pixilib.DebugView import drawDebugView
 from pixilib.Tools import *
 from pixilib.Helpers import clamp, overflow, on_screen, in_grid, coords_in
 from pixilib.Color import ColorSelector
@@ -588,11 +588,6 @@ def main(debug=False):
 
             grid_x = tmp_grid_x
             grid_y = tmp_grid_y
-
-        if debug:
-            drawDebugUIs(
-                screen, ui_locations, color=(24, 24, 24), border_color=(43, 43, 43)
-            )
 
         draw_ui_rects(screen, ui_locations)
         draw_tool_icons(

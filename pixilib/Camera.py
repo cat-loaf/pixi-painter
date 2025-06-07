@@ -30,6 +30,9 @@ class GridCamera:
         # Camera Viewport
         self.scale: float = scale
 
+        self.scale_dirty: bool = True
+        self.scaled_surface: Surface = Surface((1, 1))
+
     def set_position(self, x: float, y: float):
         """Set camera position
 
@@ -48,6 +51,7 @@ class GridCamera:
         """
         # set scale up to two decimal places
         self.scale = round(scale, 2)
+        self.scale_dirty = True
 
     def draw(
         self,
@@ -73,17 +77,16 @@ class GridCamera:
         self.draw_overlay_grid(screen, surface)
 
         # Scale the surface to camera dimensions
-        surface_scaled = self._scale_surface_to_camera_dimensions(
-            surface, self.width, self.height
-        )
+        # self.scaled_surface =
+        self._scale_surface_to_camera_dimensions(surface, self.width, self.height)
 
         if self.scale >= 0.91:
             self._draw_gridlines(
-                surface_scaled, (0, 0, 0), draw_gridlines
+                self.scaled_surface, (0, 0, 0), draw_gridlines
             )  # Draw grid lines on the surface
 
         screen.blit(
-            surface_scaled,
+            self.scaled_surface,
             (
                 int(self.real_x),
                 int(self.real_y),
@@ -187,8 +190,12 @@ class GridCamera:
         Returns:
             Surface: _description_
         """
-        return pygame.transform.scale(
-            surface, (width * self.scale, height * self.scale)
+        # return
+        if self.scale_dirty:
+            self.scaled_surface = Surface((width * self.scale, height * self.scale))
+            self.scale_dirty = False
+        pygame.transform.scale(
+            surface, (width * self.scale, height * self.scale), self.scaled_surface
         )
 
     def _draw_gridlines(self, surface: Surface, color: RGB, draw: bool = True):
