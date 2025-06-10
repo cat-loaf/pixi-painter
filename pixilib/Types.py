@@ -4,6 +4,8 @@ from enum import Enum
 type RGBA = tuple[int, int, int, int]
 type RGB = tuple[int, int, int]
 type HSV = tuple[int, int, int]
+
+type Vec2d = tuple[float, float]
 # endregion
 
 # region Constants

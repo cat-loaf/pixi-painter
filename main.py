@@ -12,6 +12,7 @@ from pixilib.Color import ColorSelector
 from pixilib.Types import HUE_MAX, SATURATION_MAX
 from pixilib.Images import ToolAssets, CursorAssets
 from pixilib.UI import draw_ui_rects, draw_tool_icons, select_tool
+from pixilib.UIWidgets import UIWidget, Label, TextInput
 
 
 def main(debug=False):
@@ -159,10 +160,30 @@ def main(debug=False):
         ),
     ]
 
+    ui_widgets: dict[str, UIWidget] = {
+        "label1": Label(
+            text="Label 1",
+            position=(300, 0),
+            size=(0, 0),
+            color=(255, 255, 255),
+            font=font,
+        ),
+        "textInput1": TextInput(
+            position=(300, 16 + 4),
+            size=(64, 32),
+            font=font,
+            accepted_regex=r"[0-9]",
+        ),
+    }
+
+    hovering_on: str = "None"
+
     draw_grid_overlay: bool = True
 
     while running:
         dt = clock.tick(60)
+
+        hovering_on = "none"
 
         keys_held = pygame.key.get_pressed()
         mouse_held = pygame.mouse.get_pressed()
@@ -186,16 +207,31 @@ def main(debug=False):
             toolset[selected_tool].__str__()
         )
 
+        # Check where mouse hovering over
+        if hovering_on == "none":
+            for name, widget in ui_widgets.items():
+                if isinstance(widget, UIWidget):
+                    if coords_in(mouse_pos, (widget.x, widget.y, widget.w, widget.h)):
+                        hovering_on = name
+        if hovering_on == "none":
+            for p in ui_locations:
+                if coords_in(mouse_pos, (p[0], p[1], p[2], p[3])):
+                    hovering_on = "ui"
+        if hovering_on == "none":
+            hovering_on = "canvas"
+        debug_text["Hovering On"] = hovering_on
+
         # Handle UI Clicks
         ui_clicked = False
-        if mouse_held[0]:
+        if mouse_held[0] and hovering_on != "canvas":
+            ui_clicked = True
             ts = select_tool(mouse_pos[0], mouse_pos[1], screen_size[0], screen_size[1])
             if ts is not None:
                 selected_tool = toolset_indexes.index(ts)
 
-            for x, y, w, h, _, _ in ui_locations:
-                if coords_in(mouse_pos, (x, y, w, h)):
-                    ui_clicked = True
+            # for x, y, widget, h, _, _ in ui_locations:
+            #     if coords_in(mouse_pos, (x, y, widget, h)):
+            #         ui_clicked = True
         debug_text["UI Clicked"] = ui_clicked
 
         # debug_text["events"] = events
@@ -223,6 +259,8 @@ def main(debug=False):
                 debug_text["Key Pressed"] = (
                     chr(event.key) if event.key < 0x10FFFF else event.key
                 )
+
+                ui_widgets["textInput1"].receive_input(event.key, event.unicode)
 
                 if event.key == K_KP_PLUS:
                     tool_sizes[selected_tool] = clamp(
@@ -257,8 +295,8 @@ def main(debug=False):
                     click_origin = (grid_x, grid_y)
                     debug_text["Click Origin"] = click_origin
 
-                    for x, y, w, h, _, _ in ui_locations:
-                        if coords_in(mouse_pos, (x, y, w, h)):
+                    for x, y, widget, h, _, _ in ui_locations:
+                        if coords_in(mouse_pos, (x, y, widget, h)):
                             ui_clicked = True
 
                     if toolset[selected_tool] in mouse_pressed_tools and not ui_clicked:
@@ -622,6 +660,10 @@ def main(debug=False):
                 - (sat_val_indicator.get_height() / 2),
             ),
         )
+
+        # Draw UI widgets
+        for widget in ui_widgets.values():
+            widget.draw(screen)
 
         if debug:
             drawDebugView(font, screen, (255, 255, 255), debug_text)
