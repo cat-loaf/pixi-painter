@@ -180,10 +180,12 @@ def main(debug=False):
 
     draw_grid_overlay: bool = True
 
+    focused_on: str = "none"
+
     while running:
         dt = clock.tick(60)
 
-        hovering_on = "none"
+        hovering_on: str = "none"
 
         keys_held = pygame.key.get_pressed()
         mouse_held = pygame.mouse.get_pressed()
@@ -219,8 +221,12 @@ def main(debug=False):
                     hovering_on = "ui"
         if hovering_on == "none":
             hovering_on = "canvas"
-        debug_text["Hovering On"] = hovering_on
 
+        if mouse_held[0]:
+            focused_on = hovering_on
+
+        debug_text["Hovering On"] = hovering_on
+        debug_text["Focused On"] = focused_on
         # Handle UI Clicks
         ui_clicked = False
         if mouse_held[0] and hovering_on != "canvas":
@@ -259,8 +265,10 @@ def main(debug=False):
                 debug_text["Key Pressed"] = (
                     chr(event.key) if event.key < 0x10FFFF else event.key
                 )
-
-                ui_widgets["textInput1"].receive_input(event.key, event.unicode)
+                for name, widget in ui_widgets.items():
+                    if isinstance(widget, TextInput):
+                        if focused_on == name:
+                            widget.receive_input(event.key, event.unicode)
 
                 if event.key == K_KP_PLUS:
                     tool_sizes[selected_tool] = clamp(
@@ -285,8 +293,6 @@ def main(debug=False):
                     debug_text["Draw Grid Overlay"] = draw_grid_overlay
 
             if event.type == MOUSEBUTTONDOWN:
-                debug_text["Mouse Pressed"] = event.button
-
                 pan_origin = mouse_pos
 
                 debug_text["Pan Origin"] = pan_origin
@@ -314,7 +320,6 @@ def main(debug=False):
                             )
 
             if event.type == MOUSEBUTTONUP:
-                debug_text["Mouse Pressed"] = None
                 data["mouse_held"] = False
                 if event.button == 1:
                     if toolset[selected_tool] in mouse_up_tools:
