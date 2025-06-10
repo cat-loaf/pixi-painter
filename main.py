@@ -1,9 +1,11 @@
 from typing import Dict
+
 import pygame
-import time
+
 from pygame.locals import *
 from pygame.font import Font
-import pixilib.Camera as Camera
+
+from pixilib.Camera import GridCamera
 from pixilib.Grid import ComputedLayeredGrid, Grid
 from pixilib.DebugView import drawDebugView
 from pixilib.Tools import *
@@ -13,6 +15,7 @@ from pixilib.Types import HUE_MAX, SATURATION_MAX
 from pixilib.Images import ToolAssets, CursorAssets
 from pixilib.UI import draw_ui_rects, draw_tool_icons, select_tool
 from pixilib.UIWidgets import UIWidget, Label, TextInput
+from pixilib.DataObject import DataObject as do
 
 
 def main(debug=False):
@@ -50,7 +53,7 @@ def main(debug=False):
     overlay_transparency = 255
     grid.overlay = overlay_grid
 
-    camera = Camera.GridCamera(
+    camera = GridCamera(
         grid,
         screen_size[0] / 2 - camera_size[0] / 2,
         screen_size[1] / 2 - camera_size[1] / 2,
@@ -173,6 +176,8 @@ def main(debug=False):
             size=(64, 32),
             font=font,
             accepted_regex=r"[0-9]",
+            max_chars=6,
+            escape_callback=lambda: print(),
         ),
     }
 
@@ -180,7 +185,7 @@ def main(debug=False):
 
     draw_grid_overlay: bool = True
 
-    focused_on: str = "none"
+    focused_on: do = do("none")
 
     while running:
         dt = clock.tick(60)
@@ -223,7 +228,7 @@ def main(debug=False):
             hovering_on = "canvas"
 
         if mouse_held[0]:
-            focused_on = hovering_on
+            focused_on.set_value(hovering_on)
 
         debug_text["Hovering On"] = hovering_on
         debug_text["Focused On"] = focused_on

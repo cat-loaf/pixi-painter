@@ -15,6 +15,8 @@ class TextInput(UIWidget):
         box_color: RGBA = (255, 255, 255),
         text: str = "",
         accepted_regex: str = None,
+        max_chars: int = -1,
+        escape_callback: callable = None,
     ):
         self.x, self.y = position
         self.w, self.h = size
@@ -31,6 +33,9 @@ class TextInput(UIWidget):
         self.surface = Surface((self.w, self.h))
 
         self.accepted_regex = accepted_regex
+        self.max_chars = max_chars
+
+        self.escape_callback = escape_callback
 
     def receive_input(self, char: int, unicode: str):
         """Recieve pygame key input
@@ -42,10 +47,18 @@ class TextInput(UIWidget):
         tmp = self.text
         char: str = pygame.key.name(char)
         self.text_dirty = True
+        if char == "backspace":
+            if self.text:
+                self.text = self.text[:-1]
+        elif char == "escape":
+            if self.escape_callback:
+                self.escape_callback()
+            return
+
+        if self.max_chars > 0 and len(self.text) >= self.max_chars:
+            return
+
         match char:
-            case "backspace":
-                if self.text:
-                    self.text = self.text[:-1]
             case "return":
                 self.text += "\n"
             case "space":
@@ -84,11 +97,28 @@ class TextInput(UIWidget):
         self.surface = Surface((self.w, self.h))
 
     def draw(self, surface: Surface):
-        if self.text_dirty:
-            self.text_surface = self.font.render(self.text, True, self.text_color)
-            self.text_dirty = False
-
         # Input box
         surface.fill(self.box_color, (self.x, self.y, self.w, self.h))
         # Text
+        if self.text_dirty:
+            self.text_surface = self.font.render(self.text, True, self.text_color)
+
+            # Crop text if bigger than (x,y,w,h)
+            text_w, text_h = self.text_surface.get_size()
+            if text_w > self.w - 10:
+                text_w = self.w - 10
+            if text_h > self.h - 10:
+                text_h = self.h - 10
+
+            # Offset text if past right edge
+            text_width = self.text_surface.get_width()
+            if text_width > self.w - 10:
+                offset = text_width - (self.w - 10)
+            else:
+                offset = 0
+
+            self.text_surface = self.text_surface.subsurface(
+                (offset, 0, text_w, text_h)
+            )
+            self.text_dirty = False
         surface.blit(self.text_surface, (self.x + 5, self.y + 5))
