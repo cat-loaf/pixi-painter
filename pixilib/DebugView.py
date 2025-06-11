@@ -4,7 +4,7 @@ from .Types import RGB, RGBA
 from matplotlib.colors import XKCD_COLORS
 
 
-def drawDebugView(font: Font, screen: Surface, color: RGB, texts: dict):
+def draw_debug_view(font: Font, screen: Surface, color: RGB, texts: dict):
     texts = {k: v for k, v in texts.items() if v is not None}
     for label, value in texts.items():
         if callable(value):

@@ -357,3 +357,28 @@ def chunks(l: list, batch_size: int) -> Iterable[list]:
     """
     for i in range(0, len(l), batch_size):
         yield l[i : i + batch_size]
+
+
+def calculate_ui_locations(
+    screen_width: int,
+    screen_height: int,
+    color_selector_width: int,
+    color_selector_height: int,
+) -> list[tuple[int, int, int, int, int, int]]:
+    """Calculate the UI locations based on the screen size."""
+    op = 20
+    ip = 10
+    ics = 32
+
+    return [
+        (0, 0, screen_width, 62, 0, 2),
+        (0, 0, 15 + color_selector_width + 15, screen_height, 0, 2),
+        (
+            screen_width - op - ics - ip - ics - op,
+            0,
+            screen_width,
+            screen_height,
+            0,
+            2,
+        ),
+    ]

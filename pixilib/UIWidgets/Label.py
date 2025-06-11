@@ -37,5 +37,5 @@ class Label(UIWidget):
     def set_position(self, position: Vec2d):
         self.x, self.y = position
 
-    def draw(self, surface: Surface):
+    def draw(self, surface: Surface, *args, **kwargs):
         surface.blit(self.surface, (self.x, self.y))

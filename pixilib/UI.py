@@ -12,7 +12,7 @@ def draw_ui_rects(
     screen: Surface,
     ui_locations: list[tuple[int, int, int, int, int, int]] = None,
 ):
-    for x, y, width, height, line_width, border in ui_locations:
+    for x, y, width, height, line_width, border in reversed(ui_locations):
         draw.rect(screen, UI_BACKING, (x, y, width, height), line_width)
         if border > 0:
             draw.rect(screen, UI_BORDER, (x, y, width, height), border)
@@ -27,10 +27,13 @@ def draw_tool_icons(
 ):
     tool_icons.select_tool(clicked_tool)
 
-    x1 = screen_width - op - ics
+    x_offset = 0
+    y_offset = 62
+
+    x1 = screen_width - op - ics - x_offset
     x0 = x1 - ip - ics
 
-    y0 = op
+    y0 = y_offset + op
     y1 = y0 + ip + ics
     y2 = y1 + ip + ics
     y3 = y2 + ip + ics
@@ -53,10 +56,13 @@ def select_tool(
     screen_width: int,
     screen_height: int,
 ) -> str | None:
-    x1 = screen_width - op - ics
+    x_offset = 0
+    y_offset = 62
+
+    x1 = screen_width - op - ics - x_offset
     x0 = x1 - ip - ics
 
-    y0 = op
+    y0 = y_offset + op
     y1 = y0 + ip + ics
     y2 = y1 + ip + ics
     y3 = y2 + ip + ics

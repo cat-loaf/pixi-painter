@@ -1,15 +1,22 @@
 from typing import Dict
+from os import path
 
 import pygame
-
 from pygame.locals import *
 from pygame.font import Font
 
 from pixilib.Camera import GridCamera
 from pixilib.Grid import ComputedLayeredGrid, Grid
-from pixilib.DebugView import drawDebugView
+from pixilib.DebugView import draw_debug_view
 from pixilib.Tools import *
-from pixilib.Helpers import clamp, overflow, on_screen, in_grid, coords_in
+from pixilib.Helpers import (
+    clamp,
+    overflow,
+    on_screen,
+    in_grid,
+    coords_in,
+    calculate_ui_locations,
+)
 from pixilib.Color import ColorSelector
 from pixilib.Types import HUE_MAX, SATURATION_MAX
 from pixilib.Images import ToolAssets, CursorAssets
@@ -19,12 +26,24 @@ from pixilib.DataObject import DataObject as do
 
 
 def main(debug=False):
+
     # Initialize Pygame
     pygame.init()
 
     # Create a window
     screen_size = (1000, 800)
     screen = pygame.display.set_mode(screen_size, pygame.RESIZABLE)
+    pygame.display.set_caption("pixi painter")
+
+    project_root = path.abspath(".")
+    window_icon = pygame.image.load(
+        path.join(project_root, "Assets", "appicon", "logo-appicon.png")
+    ).convert_alpha()
+    inapp_icon = pygame.image.load(
+        path.join(project_root, "Assets", "appicon", "logo.png")
+    ).convert_alpha()
+    inapp_icon = pygame.transform.scale(inapp_icon, (42, 42))
+    pygame.display.set_icon(window_icon)
 
     clock = pygame.time.Clock()
 
@@ -63,7 +82,7 @@ def main(debug=False):
     cam_surface = pygame.Surface((grid.width, grid.height))
 
     color_selector = ColorSelector(
-        x=15, y=15, size=[160, 160], hue_picker_height=20, hue_picker_padding=5
+        x=15, y=78, size=[160, 160], hue_picker_height=20, hue_picker_padding=5
     )
     color_selector.click(color_selector.x + 158, color_selector.y + 1)
 
@@ -101,8 +120,9 @@ def main(debug=False):
     # Main loop
     running = True
 
-    font: Font = Font(None, 24)
-
+    font_path: str = path.join(project_root, "Assets", "fonts", "liaison-grotesk.ttf")
+    font: Font = Font(font_path, 16)
+    debug_font: Font = pygame.font.SysFont("Consolas", 16)
     # toolset: list[Tool] = (
     #     mouse_held_tools
     #     + mouse_up_tools
@@ -124,6 +144,7 @@ def main(debug=False):
     selected_brush: int = 0
 
     dt: float = 0.0
+    tick: int = 0
 
     debug_text: Dict[str:any] = {
         "Δt": lambda: dt,
@@ -151,17 +172,9 @@ def main(debug=False):
     ip = 10
     ics = 32
 
-    ui_locations = [
-        (0, 0, 15 + color_selector.size[0] + 15, screen_size[1], 0, 2),
-        (
-            screen_size[0] - op - ics - ip - ics - op,
-            0,
-            screen_size[0],
-            screen_size[1],
-            0,
-            2,
-        ),
-    ]
+    ui_locations = calculate_ui_locations(
+        screen_size[0], screen_size[1], color_selector.size[0], color_selector.size[1]
+    )
 
     ui_widgets: dict[str, UIWidget] = {
         "label1": Label(
@@ -177,7 +190,7 @@ def main(debug=False):
             font=font,
             accepted_regex=r"[0-9]",
             max_chars=6,
-            escape_callback=lambda: print(),
+            escape_callback=lambda: focused_on.set_value("none"),
         ),
     }
 
@@ -189,6 +202,7 @@ def main(debug=False):
 
     while running:
         dt = clock.tick(60)
+        tick += 1
 
         hovering_on: str = "none"
 
@@ -227,11 +241,7 @@ def main(debug=False):
         if hovering_on == "none":
             hovering_on = "canvas"
 
-        if mouse_held[0]:
-            focused_on.set_value(hovering_on)
-
         debug_text["Hovering On"] = hovering_on
-        debug_text["Focused On"] = focused_on
         # Handle UI Clicks
         ui_clicked = False
         if mouse_held[0] and hovering_on != "canvas":
@@ -251,17 +261,13 @@ def main(debug=False):
                 screen_size = (event.w, event.h)
                 color_size = max(min([screen_size[0] // 5, screen_size[1] // 5]), 100)
                 color_selector.set_size(color_size, color_size)
-                ui_locations = [
-                    (0, 0, 15 + color_selector.size[0] + 15, screen_size[1], 0, 2),
-                    (
-                        screen_size[0] - op - ics - ip - ics - op,
-                        0,
-                        screen_size[0],
-                        screen_size[1],
-                        0,
-                        2,
-                    ),
-                ]
+                # UI LOCATIONS
+                ui_locations = calculate_ui_locations(
+                    screen_size[0],
+                    screen_size[1],
+                    color_selector.size[0],
+                    color_selector.size[1],
+                )
 
             if event.type == QUIT:
                 running = False
@@ -274,6 +280,7 @@ def main(debug=False):
                     if isinstance(widget, TextInput):
                         if focused_on == name:
                             widget.receive_input(event.key, event.unicode)
+                        
 
                 if event.key == K_KP_PLUS:
                     tool_sizes[selected_tool] = clamp(
@@ -299,8 +306,14 @@ def main(debug=False):
 
             if event.type == MOUSEBUTTONDOWN:
                 pan_origin = mouse_pos
-
                 debug_text["Pan Origin"] = pan_origin
+
+                focused_on.set_value(hovering_on)
+                wid = ui_widgets.get(focused_on.value)
+                if wid is not None and isinstance(wid, TextInput):
+                    wid.set_focused(True)
+
+                debug_text["Focused On"] = focused_on
 
                 if event.button == 1:
                     click_origin = (grid_x, grid_y)
@@ -672,13 +685,15 @@ def main(debug=False):
         )
 
         # Draw UI widgets
-        for widget in ui_widgets.values():
-            widget.draw(screen)
+        for name, widget in ui_widgets.items():
+            if focused_on != name and isinstance(widget, TextInput):
+                widget.set_focused(False)
+            widget.draw(screen, tick)
 
         if debug:
-            drawDebugView(font, screen, (255, 255, 255), debug_text)
+            draw_debug_view(debug_font, screen, (255, 255, 255), debug_text)
 
-        if cursor_image is not None:
+        if cursor_image is not None and mouse_pos != (0, 0):
             screen.blit(
                 cursor_image,
                 (
@@ -686,6 +701,9 @@ def main(debug=False):
                     mouse_pos[1] - cursor_offset[1],
                 ),
             )
+
+        # Draw icon
+        screen.blit(inapp_icon, (10, 10))
 
         # Update display
         pygame.display.flip()

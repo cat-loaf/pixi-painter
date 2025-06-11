@@ -37,7 +37,12 @@ class TextInput(UIWidget):
 
         self.escape_callback = escape_callback
 
-    def receive_input(self, char: int, unicode: str):
+        self.focused = False
+
+    def set_focused(self, focused: bool):
+        self.focused = focused
+
+    def receive_input(self, char: int, unicode: str, tick: int = 0):
         """Recieve pygame key input
 
         Args:
@@ -47,11 +52,13 @@ class TextInput(UIWidget):
         tmp = self.text
         char: str = pygame.key.name(char)
         self.text_dirty = True
+
         if char == "backspace":
             if self.text:
                 self.text = self.text[:-1]
         elif char == "escape":
             if self.escape_callback:
+                self.focused = False
                 self.escape_callback()
             return
 
@@ -96,10 +103,30 @@ class TextInput(UIWidget):
         self.w, self.h = size
         self.surface = Surface((self.w, self.h))
 
-    def draw(self, surface: Surface):
+    def draw(self, surface: Surface, tick: int = 0, *args, **kwargs):
         # Input box
         surface.fill(self.box_color, (self.x, self.y, self.w, self.h))
         # Text
+        if self.focused:
+            # Selection box
+            pygame.draw.rect(
+                surface,
+                (0, 0, 0),
+                (self.x + 2, self.y + 2, self.w - 4, self.h - 4),
+                1,
+            )
+            # Text Cursor
+            if (tick % 50) < 25:
+                cursor_x = self.x + 5 + self.text_surface.get_width()
+                cursor_y = self.y + 5 + self.text_surface.get_height()
+                pygame.draw.line(
+                    surface,
+                    self.text_color,
+                    (cursor_x, cursor_y),
+                    (cursor_x, cursor_y - self.text_surface.get_height()),
+                    1,
+                )
+
         if self.text_dirty:
             self.text_surface = self.font.render(self.text, True, self.text_color)
 
@@ -121,4 +148,5 @@ class TextInput(UIWidget):
                 (offset, 0, text_w, text_h)
             )
             self.text_dirty = False
+
         surface.blit(self.text_surface, (self.x + 5, self.y + 5))
